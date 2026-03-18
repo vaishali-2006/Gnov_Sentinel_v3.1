@@ -1,0 +1,146 @@
+🛰️ G-NOV SENTINEL
+Next-Gen Multimodal AI-Ops Agent for Autonomous Workspace Governance
+
+G-Nov Sentinel is a sovereign AI entity built for the Gemini Live Agent Challenge. It moves beyond simple text-in/text-out interactions by utilizing real-time Audio & Visual Telemetry to navigate, monitor, and automate complex UI workflows.
+
+🚀 Project Overview
+Category: UI Navigator / Live Agent
+
+Core Tech: Gemini 3 Flash, Google GenAI SDK, Socket.io
+
+Deployment: Google Cloud Platform (GCP)
+
+🛡️ Key Features
+Neural Voice Link: Natural language interaction with a deep-tactical voice response system.
+
+Visual Telemetry (Cyber-Scan): Real-time screen analysis to identify UI bugs and code anomalies.
+
+Ghost-Fix Mapping: High-precision coordinate overlay for intercepted system errors.
+
+Automated Workspace (In-Dev): Autonomous tab orchestration and data injection into tactical drafts.
+
+🏗️ System Architecture
+The Sentinel operates on a duplex communication layer between the Browser and Google Cloud.
+
+Input Layer: Captures real-time Voice (Mic) and Visuals (Screen/Camera).
+
+Neural Layer: Processes multimodal frames via Gemini 3 Flash.
+
+Execution Layer: Python/Flask backend hosted on GCP triggers system-level UI actions.
+
+🛠️ Tech Stack
+Models: Google Gemini 3 Flash (Multimodal)
+
+Backend: Python 3.10, Flask-SocketIO, Eventlet
+
+Frontend: HTML5, CSS3 (3D Neural Core), JavaScript (ES6)
+
+Cloud: Google Cloud Engine, Google Cloud Shell, Vertex AI
+
+🏁 Quick Start (Reproducibility)
+To spin up the Sentinel locally or in the cloud:
+
+Clone the Repo: https://docs.google.com/document/d/1-kCA2kBpOsP2Cj8pQrtKMNYdeRITKwU3IQsblUIEJ7g/edit?usp=sharing
+
+###############
+1. network should be stable
+2. if you want to close any feature so toggle again on it 
+3. screen will be shown , you have to still waiting for load perfectly 
+4. here some advance feature like tab opening , note creating , google resources opening , drive working  email sending and all  google apps are connecting to the gnov securely , so we can handle work very easily without going anywhere
+5. in case of browser if path is not working perfectly needs to test every files individually
+
+
+
+
+Bash
+
+cd GNov-Sentinel
+Install Dependencies:
+
+Bash
+pip install -r requirements.txt
+Set Environment Variables:
+Create a .env file and add your Google API Key:
+
+Plaintext
+GOOGLE_API_KEY=your_gemini_api_key_here
+Run the Engine:
+
+Bash
+python gnov.py
+Access the terminal at http://localhost:5004.
+
+📂 Submission Assets
+Demo Video: [Link to your 4-min video]
+
+Cloud Proof: [Link to your 30-sec GCP Console recording]
+
+Architecture Diagram: [Link to image/doc]
+
+
+
+
+ADVANCE - currently we are working on this project on advance feature 
+
+
+
+explore more about it -- https://docs.google.com/document/d/1-kCA2kBpOsP2Cj8pQrtKMNYdeRITKwU3IQsblUIEJ7g/edit?usp=sharing
+
+
+
+
+
+
+
+
+
+🛡️ G-NOV SENTINEL: Multimodal AI-Ops Engine
+Category: UI Navigator
+
+Core Brain: Google Gemini 3 Flash
+
+Deployment: Google Cloud Platform (GCP)
+
+🚀 Overview
+G-NOV SENTINEL is an autonomous UI Navigator designed to eliminate visual blindness in DevOps. By leveraging the multimodal capabilities of Gemini 3 Flash, Sentinel can see the user's interface, hear vocal commands, and execute system actions in real-time.
+
+🛠️ Technical Architecture
+We use a real-time event-driven pipeline:
+
+Frontend: 3D Kinetic Dashboard (HTML5/CSS3) with Socket.io streaming.
+
+Backend: Python Flask-SocketIO engine hosted on Google Cloud Run.
+
+Intelligence: Gemini 3 Flash via Vertex AI for visual telemetry analysis and Ghost-Fix coordinate mapping.
+
+[Yahan mere wale Diagram ka link ya image daal dena]
+
+✨ Key Features
+Visual Telemetry: Real-time screen analysis to detect UI regressions.
+
+Multimodal Intent Parsing: Combining voice and vision to understand complex user goals.
+
+Ghost-Fix Navigation: Autonomous execution of UI tasks using identified coordinates.
+
+Neural Archives: Session persistence and mission logging.
+
+🏗️ Automated Cloud Deployment
+Sentinel is built for the cloud. We automate our deployment using Google Cloud Build and custom shell scripts.
+
+Containerization: Docker/GCR.
+
+Serverless Execution: Google Cloud Run.
+
+Infrastructure-as-Code: Automated via deploy.sh.
+
+🚀 How to Run (Local Development)
+Clone the repo:
+
+Install Dependencies:
+
+Set Environment Variables:
+
+Launch Sentinel:
+
+📜 Problem Statement
+Developers lose 40% of productivity switching between logs and UIs. G-NOV Sentinel bridges this gap by giving the AI "eyes" to see the interface, turning diagnostic data into visual action.
