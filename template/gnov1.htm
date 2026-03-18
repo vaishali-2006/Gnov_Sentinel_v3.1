@@ -1,0 +1,4936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>GNov Sentinel | Stable Workspace</title>
+
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+
+<script>
+// --- 🛰️ ZONE 0: GLOBAL SYSTEM STATE (Sabse upar) ---
+// Is line ko change karo (Line 15-20 ke paas hogi)
+
+let isRecording = false; 
+let missionLogs = [];
+let isGemyTalking = false;
+let isMuted = false;
+
+// --- STEP 1: addLog Function (Is recording check ke saath upar rakho) ---
+function addLog(message, sender = 'system', msgId = null) {
+    const mainLogContainer = document.getElementById('ai-logs');
+    if(!mainLogContainer) return;
+
+    // ⏺️ Recording Logic Fix: Ab 'isRecording' defined milega
+    if (isRecording && !message.toString().includes("[0]")) {
+        const time = new Date().toLocaleTimeString();
+        missionLogs.push(`[${time}] ${sender.toUpperCase()}: ${message}`);
+    }
+
+    // Baaki ka addLog logic (timestamp, entry creation, etc.)
+    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const finalId = msgId || ("msg-" + Date.now());
+    
+    // ... aapka existing element creation code ...
+    const logEntry = document.createElement('div');
+    logEntry.className = `log-entry ${sender === 'user' ? 'user-msg' : 'gemy-msg'}`;
+    logEntry.innerHTML = `<div>${message}</div>`; // Shortened for example
+    
+    mainLogContainer.appendChild(logEntry);
+    mainLogContainer.scrollTop = mainLogContainer.scrollHeight;
+}
+
+// --- STEP 2: Socket Initialization (Ab addLog aur variables ready hain) ---
+let socket = io("http://127.0.0.1:5004");
+
+socket.on("connect", () => {
+    addLog("Gemini Pulse Active. All systems initialized.", 'system');
+});
+
+function connectSocket() {
+    if (typeof io !== 'undefined') {
+        // ✨ GEMINI PULSE: Connecting to Neural Port 5004
+        socket = io("http://127.0.0.1:5004", {
+            transports: ["websocket"], 
+            upgrade: false,
+            reconnection: true,
+            reconnectionAttempts: 15,  // Gemini ke liye extra attempts
+            reconnectionDelay: 1000,
+            timeout: 60000,            // 1 Minute timeout for Multimodal data
+            requestTimeout: 60000
+        });
+
+        socket.on("connect", () => {
+            console.log("📡 Gemini Pulse established! Neural ID:", socket.id);
+            addLog("Gemini Pulse Active. 5004 Neural link online.", 'system');
+            
+            // 🛡️ RE-INITIALIZE: Purane listeners saaf karke naye lagao
+            socket.off('agent_speech'); 
+            socket.off('logs');
+            socket.off('session_history_payload');
+            initializeSocketListeners(); 
+        });
+
+        socket.on("disconnect", (reason) => {
+            console.warn("🚀 Pulse Disconnected:", reason);
+            if (reason === "io server disconnect") {
+                socket.connect(); 
+            }
+        });
+
+        socket.on("connect_error", (err) => {
+            console.error("🚀 Pulse Connection Failed:", err.message);
+            // Agar server band hai toh log mein dikhao
+            addLog("Critical: Gemini Pulse server (5004) unreachable. System offline", 'system');
+        });
+
+    } else {
+        console.error("🚀 GNov Alert: Socket.io Library missing!");
+        setTimeout(connectSocket, 2000);
+    }
+}
+
+// 🧠 Neural Listeners (Optimized for Port 5004)
+function initializeSocketListeners() {
+    if (!socket) return;
+
+    // --- 📂 Archives Restore ---
+    socket.on('session_history_payload', (data) => {
+        if (!logContainer) return;
+        logContainer.innerHTML = ""; 
+        if (data && data.messages) {
+            data.messages.forEach(msg => addLog(msg.text, msg.sender));
+            console.log("📂 Neural Archives Restored.");
+        }
+    });
+
+    // --- 🛡️ GEMY REPLY HANDLER ---
+    socket.on('agent_speech', (data) => {
+        console.log("📥 Pulse Reply Received:", data);
+        
+        // Agar speech handler exist karta hai toh use call karo
+        if (typeof handleAgentSpeech === 'function') {
+            handleAgentSpeech(data);
+        } else {
+            const text = data.text || data.message;
+            if (text) addLog(text, 'gemy');
+        }
+    });
+
+    // --- 📡 System Logs ---
+    socket.on('logs', (data) => {
+        // [0] Tag check: Agar [0] hai toh special formatting (Optional)
+        if (data.message.includes("[0]")) {
+            console.log("⚡ System Priority Log:", data.message);
+        }
+        addLog(data.message, 'system');
+    });
+}
+
+// 🔥 Ignite the System
+connectSocket();
+ //////
+
+
+/////////////////////////////////
+
+function addLog(message, sender = 'system', msgId = null) {
+
+
+    const mainLogContainer = document.getElementById('ai-logs'); 
+    const floatContent = document.getElementById('float-speech-text'); 
+
+    // if (isRecording && !message.includes("[0]")) {
+    //     missionLogs.push(`[${new Date().toLocaleTimeString()}] ${sender.toUpperCase()}: ${message}`);
+    // }
+   
+    if (isRecording && !message.toString().includes("[0]")) {
+        const time = new Date().toLocaleTimeString();
+        const entry = `[${time}] ${sender.toUpperCase()}: ${message}`;
+        missionLogs.push(entry); 
+        console.log("📝 Logged to Mission Archive:", entry);
+    }
+
+
+    if(!mainLogContainer) return;
+
+    // ⏺️ RECORDING LOGIC (The Intelligent Fix)
+    if (isRecording && !message.toString().includes("[0]")) {
+        const time = new Date().toLocaleTimeString();
+        
+        // Agar sender Gemy hai aur message "..." hai, toh abhi save MAT karo
+        if (sender === 'gemy' && message === "...") {
+            console.log("⏳ Waiting for Gemy's real text before logging...");
+        } else {
+            // Asli message milte hi save karo
+            missionLogs.push(`[${time}] ${sender.toUpperCase()}: ${message}`);
+            console.log("📝 Logged to Mission Archive:", message);
+        }
+    }
+    
+    if(!mainLogContainer) return;
+    
+    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const finalId = msgId || ("msg-" + Date.now());
+
+    
+    if (message.toString().startsWith("[0]")) {
+        if (floatContent) {
+           
+            const cleanMsg = message.replace("[0]", "").trim();
+            floatContent.innerHTML = `<span style="color:var(--cyan); font-size:9px;">[${timestamp}]</span> ${cleanMsg}`;
+            
+            
+            floatContent.style.textShadow = "0 0 8px var(--cyan)";
+            setTimeout(() => { if(floatContent) floatContent.style.textShadow = "none"; }, 300);
+        }
+        return; // 🛑 Yahan stop ho jao, main terminal mein mat dalo
+    }
+
+    
+    const logEntry = document.createElement('div');
+    
+    // Logic to decide Pink (User) or Cyan (Gemy)
+    let isUser = (sender === 'user' || sender === 'COMMANDER');
+    let senderClass = isUser ? "user-msg" : "gemy-msg";
+    let senderName = isUser ? "COMMANDER" : "GNov_Sentinel";
+
+    logEntry.className = `log-entry ${senderClass}`;
+    logEntry.innerHTML = `
+        <div class="msg-header">
+            <span>${senderName}</span> • <span style="font-size:9px">${timestamp}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <span id="${finalId}" class="message-text" style="white-space: pre-wrap; flex-grow: 1;">${message}</span>
+            ${!isUser ? `<button onclick="copyToClipboard(this)" class="copy-btn-god">copy</button>` : ''}
+        </div>
+    `;
+
+    mainLogContainer.appendChild(logEntry);
+    mainLogContainer.scrollTop = mainLogContainer.scrollHeight;
+}
+
+
+    
+</script>
+    <style>
+        :root {
+            --cyan: #00f2ff;
+            --bg: #151a25;
+            --panel: #013a245c;
+            --border: #48485f;
+        }
+
+        /* --- SUNDER SCROLLBAR --- */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #05080a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--cyan);
+            border-radius: 10px;
+            box-shadow: 0 0 10px var(--cyan);
+        }
+
+        body, html {
+            margin: 0; padding: 0; height: 100vh;
+            background: var(--bg); color: #adbac7;
+            font-family: 'Segoe UI', sans-serif; overflow: hidden;
+            user-select: none;
+        }
+
+        header {
+            height: 45px; background: hsla(207, 90%, 55%, 0.32);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; padding: 0 15px;
+            justify-content: space-between;
+        }
+
+        .nav-group { display: flex; gap: 8px; align-items: center; }
+
+        .master-btn {
+            background: var(--cyan); border: none;
+            color: #000; padding: 6px; cursor: pointer;
+            border-radius: 4px; display: flex; align-items: center;
+            font-weight: bold; margin-right: 15px;
+        }
+
+        .toggle-btn {
+            background: #22272e; border: 1px solid var(--border);
+            color: #adbac7; padding: 5px 12px; font-size: 11px;
+            cursor: pointer; border-radius: 4px; text-transform: uppercase;
+        }
+
+        .toggle-btn.active { border-color: var(--cyan); color: var(--cyan); }
+
+        #workspace { display: flex; height: calc(100vh - 45px); width: 100vw; }
+        .panel { display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
+        #left-panel { width: 30%; min-width: 0; border-right: 1px solid var(--border); }
+        #right-container { flex-grow: 1; display: flex; flex-direction: column; min-width: 0; }
+
+        .sub-panel { display: flex; flex-direction: column; overflow: hidden; border-bottom: 1px solid var(--border); }
+        #video-panel { height: 60%; background: #000; position: relative; } /* Added relative for brackets */
+        #report-panel { flex-grow: 1; background: var(--panel); overflow-y: auto; }
+
+        /* --- SCANNING BRACKETS FOR VIDEO CASTING --- */
+        .scan-bracket {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border: 2px solid var(--cyan);
+            z-index: 5;
+            opacity: 0.7;
+            filter: drop-shadow(0 0 5px var(--cyan));
+            animation: bracket-pulse 2s infinite ease-in-out;
+        }
+        .top-l { top: 55px; left: 15px; border-right: 0; border-bottom: 0; }
+        .top-r { top: 55px; right: 15px; border-left: 0; border-bottom: 0; }
+        .bot-l { bottom: 15px; left: 15px; border-right: 0; border-top: 0; }
+        .bot-r { bottom: 15px; right: 15px; border-left: 0; border-top: 0; }
+
+        @keyframes bracket-pulse {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+
+        /* --- ADVANCED GRID & CAGE ENVIRONMENT --- */
+        .grid-environment {
+            position: relative;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #05080a;
+            perspective: 1200px;
+        }
+
+        .moving-grid {
+            position: absolute;
+            width: 200%; height: 200%;
+            top: -50%; left: -50%;
+            background-image: 
+                linear-gradient(rgb(0, 242, 255) 1px, transparent 1px),
+                linear-gradient(90deg, rgb(0, 242, 255) 1px, transparent 1px);
+            background-size: 50px 50px;
+            transform: rotateX(65deg);
+            animation: grid-flow 15s linear infinite;
+            z-index: 1;
+        }
+
+        .energy-cage {
+            position: absolute;
+            width: 340px; height: 520px;
+            border-radius: 170px;
+            border: 99px dashed rgba(0, 242, 255, 0.4);
+            box-shadow: 0 0 40px rgba(0, 242, 255, 0.15), inset 0 0 30px rgba(0, 242, 255, 0.1);
+            background: radial-gradient(circle, rgba(0, 242, 255, 0.05) 0%, transparent 70%);
+            z-index: 2;
+            animation: cage-rotate 8s infinite linear, cage-pulse 3s infinite ease-in-out;
+        }
+
+        .grid-overlay-glow {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, transparent 30%, #05080a 90%);
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        #video-wrapper {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #main-video {
+            width: 300px; height: 480px;
+            border-radius: 150px;
+            filter: drop-shadow(0 0 30px #00ffff);
+            mix-blend-mode: screen;
+            object-fit: cover;
+            border: 3px solid var(--cyan);
+        }
+
+        .agent-tag {
+            margin-top: 20px;
+            letter-spacing: 5px;
+            font-weight: bold;
+            color: var(--cyan);
+            text-shadow: 0 0 10px var(--cyan);
+        }
+
+        @keyframes grid-flow {
+            0% { transform: rotateX(65deg) translateY(0); }
+            100% { transform: rotateX(65deg) translateY(50px); }
+        }
+        @keyframes cage-rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes cage-pulse {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+
+        .resizer-h { width: 16px; cursor: col-resize; transition: background 0.2s; z-index: 1000; }
+        .resizer-h:hover, .resizing-h { background: var(--cyan); }
+        .resizer-v { height: 16px; cursor: row-resize; transition: background 0.2s; z-index: 1000; }
+        .resizer-v:hover, .resizing-v { background: var(--cyan); }
+        .hidden { display: none !important; }
+
+        .panel-header {
+            background: #1c2128; padding: 6px 15px; font-size: 10px;
+            color: #768390; border-bottom: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+
+
+<!-- socket.io already included in <head> -->
+
+<header>
+    <div class="nav-group">
+        <button class="master-btn" onclick="resetLayout()" title="Restore All Panels">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <path d="M9 3v18M9 11h12" />
+            </svg>
+        </button>
+        <div style="font-weight: bold; color: var(--cyan); font-size: 14px;">GNov_SENTINEL</div>
+    </div>
+
+
+
+
+<div id="status-container" class="status-box">
+    <span id="status-dot" class="dot-offline"></span>
+    <span id="status-text">SYSTEM OFFLINE</span>
+</div>
+
+
+
+
+<style>
+.status-box {
+    display: flex;
+    align-items: center;
+    padding: 8px 15px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid #333;
+    border-radius: 20px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 12px;
+    letter-spacing: 1px;
+    width: fit-content;
+}
+
+#status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 10px;
+    transition: 0.3s;
+}
+
+/* 🔴 Offline State */
+.dot-offline {
+    background-color: #ff4b2b;
+    box-shadow: 0 0 10px #ff4b2b;
+}
+
+/* 🟢 Online State */
+.dot-online {
+    background-color: #00ff88;
+    box-shadow: 0 0 15px #00ff88;
+    animation: pulse-green 1s infinite;
+}
+
+@keyframes pulse-green {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+.text-online { color: #00ff88; }
+.text-offline { color: #ff4b2b; }
+</style>
+<script>
+function updateStatus(isOnline) {
+    const dot = document.getElementById('status-dot');
+    const text = document.getElementById('status-text');
+
+    if (isOnline) {
+        dot.className = 'dot-online';
+        text.innerText = 'NEURAL LINK ACTIVE';
+        text.className = 'text-online';
+    } else {
+        dot.className = 'dot-offline';
+        text.innerText = 'SYSTEM OFFLINE';
+        text.className = 'text-offline';
+    }
+}
+
+// 📡 SOCKET EVENTS MEIN INTEGRATE KARO
+socket.on("connect", () => {
+    updateStatus(true); // Green light!
+    console.log("📡 Connected to Port:", socket.io.uri);
+});
+
+socket.on("disconnect", () => {
+    updateStatus(false); // Red light!
+});
+
+socket.on("connect_error", () => {
+    updateStatus(false); // Error light!
+});    
+
+
+
+
+</script>
+
+
+
+
+<!--////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>
+
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+/lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+
+////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+
+    <div class="nav-group sys-options">
+        <button class="opt-btn" id="drag-box-toggle" onclick="toggleDragBox()" title="Floating Agent">🛸</button>
+        <button class="opt-btn" id="mic-toggle" onclick="handleMic()" title="Microphone">🎤</button>
+        <button class="opt-btn" id="cam-toggle" onclick="handleCam()" title="Camera">📷</button>
+        <button class="opt-btn" id="cast-toggle" onclick="handleCast()" title="Screen Cast">🖥️</button>
+        <button class="opt-btn" id="speaker-toggle" onclick="handleSpeaker()" title="Speaker">🔊</button>
+        <div class="sep"></div>
+        <button class="opt-btn rec-red" id="rec-toggle" onclick="handleRec()" title="Start Recording">⏺️</button>
+       
+    </div>
+   
+<div class="menu-container">
+    <button id="menuTrigger" class="dots-btn">⋮</button>
+    
+    <div id="neuralPopup" class="neural-popup hidden">
+        <div class="popup-header">Neural Command Center</div>
+        <button class="popup-item" id="btnNotepad">
+            <span class="icon">📝</span> Neural Notepad
+        </button>
+      
+
+
+        <button class="popup-item" id="btnNotepad" onclick="window.location.href='app1.htm'">
+    <span class="icon">📝</span> Neural Notepad
+</button>
+        <!-- <button class="popup-item" id="btnFeature2">
+            <span class="icon">🚀</span> Tactical Link (Soon)
+        </button> -->
+        <button class="popup-item" id="btnFeature3">
+            <span class="icon">🛡️</span> Security Hub (Soon)
+        </button>
+    </div>
+</div>
+
+
+<div id="notepadModal" class="modal hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 style="color: #00ff41;">📓 Tactical Notebook</h3>
+            <button onclick="showNamePrompt()" class="plus-btn">+</button>
+        </div>
+
+        <div id="namePrompt" class="hidden" style="margin-bottom: 10px; border: 1px solid #00ff41; padding: 10px; border-radius: 5px;">
+
+            <input type="text" id="newNodeName" placeholder="Write  the note name here..." style="background: #000; color: #00ff41; border: 1px solid #333; padding: 5px;">
+            <button onclick="confirmCreateNote()" style="background: #00ff41; color: #000; border: none; padding: 5px 10px; cursor: pointer;">Create</button>
+        </div>
+
+        <div class="session-wrapper" style="display: flex; gap: 15px; height: 300px;">
+            <div id="noteList" class="session-sidebar" style="width: 150px; border-right: 1px solid #333; overflow-y: auto;"></div>
+
+            <div class="editor-container" style="flex-grow: 1; display: flex; flex-direction: column;">
+                <textarea id="noteArea" placeholder="Write your specific information" style="flex-grow: 1;"></textarea>
+              
+                <div class="modal-actions" style="margin-top: 10px; display: flex; gap: 10px;">
+                    <button onclick="saveNoteData()" style="background: #00ff41; color: #000;">Save Note</button>
+                    <button onclick="deleteNote()" style="background: #ff4444; color: #fff;">Delete</button>
+                    <button onclick="closeNotepad()">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<style>
+.plus-btn {
+    background: #00ffea; color: black; border: none; 
+    width: 30px; height: 30px; border-radius: 50%; 
+    font-size: 20px; font-weight: bold; cursor: pointer;
+}
+
+.session-sidebar {
+    width: 120px; max-height: 250px; overflow-y: auto;
+    border-right: 1px solid #535151; padding-right: 10px;
+}
+
+.session-item {
+    padding: 8px; font-size: 11px; cursor: pointer;
+    border-bottom: 1px solid #014e20; color: #888; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+}
+
+.session-item:hover { color: #00ccff; background: rgba(0, 255, 65, 0.1); }
+
+textarea#noteArea {
+    width: 100%; height: 200px; background: #5607074e; color: #1dffe8;
+    border: 1px solid #333; padding: 12px; font-family: 'Courier New', monospace;
+    resize: none; border-radius: 5px;
+}
+
+
+.menu-container { position: fixed; top: 0px; right: 600px; z-index: 1000; }
+.dots-btn { background: none; border: none; color: #00ffee; font-size: 30px; cursor: pointer; }
+
+.neural-popup {
+    position: absolute; right: 0; top: 40px;
+    background: rgba(20, 20, 20, 0.9); border: 1px solid #f700ff;
+    border-radius: 8px; width: 200px; backdrop-filter: blur(10px);
+}
+
+.popup-item {
+    width: 100%; padding: 12px; background: none; border: none;
+    color: white; text-align: left; cursor: pointer; transition: 0.3s;
+}
+
+.popup-item:hover { background: rgba(0, 255, 65, 0.2); color: #00ddff; }
+
+.hidden { display: none; }
+
+/* Notepad Modal */
+.modal {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+    display: flex; align-items: center; justify-content: center; z-index: 2000;
+}
+.modal-content {
+    background: #111; border: 2px solid #00bbff; padding: 20px;
+    width: 80%; max-width: 500px; border-radius: 10px;
+}
+textarea {
+    width: 100%; height: 200px; background: #000; color: #00c8ff;
+    border: 1px solid #333; padding: 10px; font-family: 'Courier New', monospace;
+}
+</style>
+<script>
+let myNotes = JSON.parse(localStorage.getItem('gnov_notebook')) || [];
+let activeNoteId = null;
+
+
+
+
+
+
+
+
+
+////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>
+
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+//lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+//mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+//nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+
+////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+  
+// Page load hote hi list dikhao
+window.addEventListener('load', renderNoteList);
+
+function showNamePrompt() {
+    document.getElementById('namePrompt').classList.toggle('hidden');
+}
+
+function confirmCreateNote() {
+    const nameInput = document.getElementById('newNodeName');
+    if (nameInput.value.trim() === "") return alert("Create name ");
+
+    const newNote = {
+        id: Date.now(),
+        title: nameInput.value,
+        content: ""
+    };
+
+    myNotes.push(newNote);
+    localStorage.setItem('gnov_notebook', JSON.stringify(myNotes));
+    
+    nameInput.value = "";
+    document.getElementById('namePrompt').classList.add('hidden');
+    renderNoteList();
+    loadNote(newNote.id);
+}
+
+function renderNoteList() {
+    const list = document.getElementById('noteList');
+    list.innerHTML = "";
+    myNotes.forEach(note => {
+        const item = document.createElement('div');
+        item.className = 'session-item';
+        item.innerText = "📌 " + note.title;
+        item.onclick = () => loadNote(note.id);
+        list.appendChild(item);
+    });
+}
+
+function loadNote(id) {
+    activeNoteId = id;
+    const note = myNotes.find(n => n.id === id);
+    document.getElementById('noteArea').value = note.content;
+    // UI highlight logic yahan add kar sakte ho
+}
+
+function saveNoteData() {
+    if (!activeNoteId) return alert("Click (+) to create a note!");
+    const content = document.getElementById('noteArea').value;
+    const note = myNotes.find(n => n.id === activeNoteId);
+    note.content = content;
+    localStorage.setItem('gnov_notebook', JSON.stringify(myNotes));
+    alert("Note saved safely! ✅");
+}
+
+function deleteNote() {
+    if (!activeNoteId) return;
+    myNotes = myNotes.filter(n => n.id !== activeNoteId);
+    localStorage.setItem('gnov_notebook', JSON.stringify(myNotes));
+    document.getElementById('noteArea').value = "";
+    activeNoteId = null;
+    renderNoteList();
+}
+
+
+// Open/Close Popup
+document.getElementById('menuTrigger').onclick = function() {
+    document.getElementById('neuralPopup').classList.toggle('hidden');
+};
+
+// Open Notepad
+document.getElementById('btnNotepad').onclick = function() {
+    document.getElementById('notepadModal').classList.remove('hidden');
+    document.getElementById('neuralPopup').classList.add('hidden'); // Close menu
+};
+
+function closeNotepad() {
+    document.getElementById('notepadModal').classList.add('hidden');
+}    
+
+/////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
+
+
+</script>
+
+
+<div id="terminal-design" style="cursor: move; background: rgba(0, 242, 255, 0.15); padding: 8px 12px; border: 1px solid var(--cyan); border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center; border-bottom: none;">
+    
+    <span style="font-size: 9px; color: var(--cyan); letter-spacing: 2px; font-weight: bold; font-family: 'Orbitron', sans-serif;">G-NOV</span>
+    
+    <div style="display: flex; gap: 8px; align-items: center;">
+        
+        <button onclick="toggleHistoryOverlay()" title="Neural Playback" 
+            style="background: #05080a; border: 1px solid var(--cyan); color: var(--cyan); cursor: pointer; width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px rgba(0, 242, 255, 0.2); transition: 0.3s;">
+            <span style="font-size: 14px; filter: drop-shadow(0 0 2px var(--cyan));">⏮️</span>
+        </button>
+
+        <button onclick="triggerNewSession()" title="Initialize New Track" 
+            style="background: #05080a; border: 1px solid #ff3366; color: #ff3366; cursor: pointer; width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px rgba(255, 51, 102, 0.2); transition: 0.3s;">
+            <span style="font-size: 14px; filter: drop-shadow(0 0 2px #ff3366);">🆕</span>
+        </button>
+<!-- 
+        <button onclick="toggleManual()" title="Operation Manual" 
+    style="background: rgba(0, 242, 255, 0.1); border: 1px solid var(--cyan); color: var(--cyan); cursor: pointer; padding: 5px 15px; border-radius: 20px; font-family: 'Orbitron', sans-serif; font-size: 10px; letter-spacing: 1px; transition: 0.3s; box-shadow: 0 0 10px rgba(0, 242, 255, 0.2);">
+    📜 
+</button> -->
+
+
+
+
+ <button  onclick="toggleGemyTerminal()" title="Gemy Launcher"
+            style="background: #05080a; border: 1px solid #41ff33; color: #33ff3a; cursor: pointer; width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px rgba(255, 51, 102, 0.2); transition: 0.3s;">
+            <span style="font-size: 14px; filter: drop-shadow(0 0 2px #3388ff);">🤖</span>
+        </button>
+
+
+  <a href="/template/contrl.htm" style="text-decoration: none;">
+    <button class="sentinel-manual-trigger" onclick="toggleManual()">
+        <span class="icon-spin">⚙️</span> 
+        ctrl
+    </button>
+</a>
+
+<!-- 
+        <button id="gemy-launcher" onclick="toggleGemyTerminal()" title="Gemy Launcher"
+            style="background: #05080a; border: 1px solid var(--cyan); color: var(--cyan); cursor: pointer; width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px rgba(0, 242, 255, 0.2); transition: 0.3s; position: relative;">
+            <span style="font-size: 14px; filter: drop-shadow(0 0 2px var(--cyan));">🤖</span>
+            <div class="launcher-glow"></div>
+        </button> -->
+
+        <div style="width: 8px; height: 8px; background: var(--cyan); border-radius: 50%; box-shadow: 0 0 8px var(--cyan); margin-left: 5px;"></div>
+    </div>
+</div>
+       
+<!-- #################################################################3 -->
+
+</script>
+
+<div id="history-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.92); backdrop-filter: blur(15px); z-index: 2000000; align-items: center; justify-content: center;">
+    <div style="width: 90%; max-width: 600px; background: #0d1117; border: 2px solid var(--cyan); border-radius: 12px; display: flex; flex-direction: column; max-height: 80vh; box-shadow: 0 0 50px rgba(0, 242, 255, 0.3);">
+        
+        <div style="padding: 15px 20px; border-bottom: 1px solid rgba(0, 242, 255, 0.2); display: flex; justify-content: space-between; align-items: center;">
+            <span style="color: var(--cyan); font-family: 'Orbitron', sans-serif; letter-spacing: 2px; font-size: 14px;">🛰️ MISSION_ARCHIVES</span>
+            <button onclick="toggleHistoryOverlay()" style="background: none; border: 1px solid var(--cyan); color: var(--cyan); cursor: pointer; padding: 5px 12px; border-radius: 4px; font-weight: bold;">CLOSE ✕</button>
+        </div>
+
+        <div id="history-grid" style="padding: 25px; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 20px; overflow-y: auto;">
+            </div>
+    </div>
+</div>
+
+<script> 
+
+
+
+
+window.addEventListener('DOMContentLoaded', (event) => {
+    // Check if first time user
+    if (!localStorage.getItem('gnov_first_init')) {
+        
+        // 1. Voice Trigger (Wait 1.5s for page to load)
+        setTimeout(() => {
+            // const welcomeMsg = "Hey! Before we start, please read the tactical operations manual to understand how to control me, Commander.";
+            
+            // // Calling your existing agent_speech logic or standard Web Speech API
+            // const speech = new SpeechSynthesisUtterance(welcomeMsg);
+            // speech.lang = 'en-US';
+            // speech.pitch = 0.9; // Tactical deep voice
+            // speech.rate = 1.0;
+            // window.speechSynthesis.speak(speech);
+            
+
+            const welcomeMsg = "Hey! Before we start, please read the tactical operations manual to understand how to control me, Commander.";
+
+const speech = new SpeechSynthesisUtterance(welcomeMsg);
+
+// 🎤 VOICE CONFIGURATION (Deep Male Tone)
+const voices = window.speechSynthesis.getVoices();
+
+// 1. Voice select (Google US English Male dhoondne ki koshish karega)
+speech.voice = voices.find(voice => voice.name.includes('Male') || voice.name.includes('Google US English')) || voices[0];
+
+// 2. Deep tone parameters
+speech.pitch = 0.5; // 
+speech.rate = 0.85; // 
+speech.volume = 1;   // 
+
+window.speechSynthesis.speak(speech);
+            // 2. Open the manual automatically for the first time
+            toggleManual(); 
+
+            // 3. Mark as initialized so it doesn't repeat
+            localStorage.setItem('gnov_first_init', 'true');
+            
+            console.log("🚀 G-Nov: First-time initialization complete.");
+        }, 1500);
+    }
+});
+
+
+
+//////////////////////////////////////////
+
+// --- 🛰️ ZONE: PRIVATE IDENTITY ---
+// Har browser ka apna ek unique ID hoga
+if (!localStorage.getItem('sentinel_user_id')) {
+    localStorage.setItem('sentinel_user_id', 'User_' + Math.random().toString(36).substring(2, 9));
+}
+const MY_ID = localStorage.getItem('sentinel_user_id');
+
+// --- 🧠 THE FINAL STABLE LOGIC ---
+
+function toggleHistoryOverlay() {
+    const overlay = document.getElementById('history-overlay');
+    if (!overlay) return;
+    
+    if (overlay.style.display === 'none' || overlay.style.display === '') {
+        overlay.style.display = 'flex';
+        // 🔒 Request ONLY my sessions
+        socket.emit('get_all_sessions', { user_id: MY_ID }); 
+    } else {
+        overlay.style.display = 'none';
+    }
+}
+
+
+
+
+// Card par click hone par ye trigger hona chahiye
+function requestPlayback(sessionId) {
+    console.log("🛰️ Requesting Neural Playback:", sessionId);
+    socket.emit('load_session', { session_id: sessionId });
+    // Overlay band kardo chat dikhane ke liye
+    if(typeof toggleHistoryOverlay === 'function') toggleHistoryOverlay(); 
+}
+
+
+
+
+
+function triggerNewSession() {
+    // 🔒 Start new session for THIS user only
+    socket.emit('start_new_session', { user_id: MY_ID }); 
+    const logs = document.getElementById('ai-logs');
+    if (logs) logs.innerHTML = '<div style="color:var(--cyan); padding:10px;">[0] [NEURAL-WIPE]: Private channel reset.</div>';
+}
+function renderSessionCard(data) {
+    const grid = document.getElementById('history-grid');
+    if (!grid || document.getElementById(`card-${data.session_id}`)) return;
+
+    const card = document.createElement('div');
+    card.id = `card-${data.session_id}`;
+    card.className = 'archive-card';
+    
+    // Aesthetic UI with Details
+    card.style.cssText = `
+        background: rgba(0, 242, 255, 0.03);
+        border: 1px solid rgba(0, 242, 255, 0.2);
+        padding: 15px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: 0.3s;
+        border-top: 3px solid var(--cyan);
+    `;
+// ✨ Updated Forensic Archive Card
+card.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <span style="font-size:22px; filter: drop-shadow(0 0 5px var(--cyan));">📂</span>
+        <div style="text-align:right;">
+            <span style="font-size:8px; color:var(--cyan); background:rgba(0,242,255,0.1); padding:2px 6px; border-radius:3px; border:1px solid rgba(0,242,255,0.3); letter-spacing:1px;">
+                ${data.msg_count || 0}_ENTRIES
+            </span>
+        </div>
+    </div>
+
+    <div style="border-left: 2px solid var(--cyan); padding-left: 10px; margin-bottom: 10px;">
+        <div style="font-size: 10px; color: #fff; font-weight: bold; letter-spacing:1.5px; text-transform:uppercase;">
+            MISSION: TRACK_${data.session_id.split('_').pop()}
+        </div>
+        <div style="font-size: 8px; color: #555; font-family:monospace; margin-top:2px;">
+            ID: ${data.session_id.substring(0,15)}...
+        </div>
+    </div>
+
+    <div style="background:rgba(0,0,0,0.3); padding:8px; border-radius:4px; margin-bottom:10px; border:1px dashed rgba(255,255,255,0.05);">
+        <div style="font-size: 9px; color: #adbac7; font-style: italic; line-height:1.4;">
+            "${data.preview || 'No neural data captured...'}"
+        </div>
+    </div>
+
+    <div style="margin-top: auto; padding-top: 8px; border-top: 1px solid rgba(0,242,255,0.1); display: flex; flex-direction: column; gap: 3px;">
+        <div style="display:flex; justify-content:space-between; font-size: 8px; color: #768390;">
+            <span>📅 DATE_STAMP:</span>
+            <span style="color:#adbac7;">${data.last_active ? data.last_active.split(' ')[0] : 'N/A'}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size: 8px; color: #768390;">
+            <span>⏰ SYNC_TIME:</span>
+            <span style="color:var(--cyan); font-weight:bold;">${data.last_active ? data.last_active.split(' ')[1] : 'N/A'}</span>
+        </div>
+        <div style="font-size: 7px; color: #444; text-align:center; margin-top:5px; letter-spacing:2px;">
+            STATUS: ARCHIVED_SECURELY
+        </div>
+    </div>
+`;
+
+    card.onclick = () => {
+        socket.emit('load_session', { session_id: data.session_id, user_id: MY_ID });
+        toggleHistoryOverlay();
+        addLog(`[0] System: Establishing link to Mission ${data.session_id}...`, 'system');
+    };
+    grid.prepend(card);
+}
+
+// Socket Listeners (Individualized)
+socket.on('all_sessions_list', (data) => {
+    const grid = document.getElementById('history-grid');
+    if (grid) grid.innerHTML = ""; 
+    if (data.sessions) data.sessions.forEach(s => renderSessionCard(s));
+});
+
+socket.on('new_session_created', (data) => renderSessionCard(data));
+
+socket.on("connect", () => {
+    socket.emit('get_all_sessions', { user_id: MY_ID });
+});
+
+
+
+
+</script>
+
+
+<style>
+    .sentinel-manual-trigger {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: #000;
+        color: #00f2ff;
+        border: 2px solid #00f2ff;
+        padding: 8px 20px;
+        border-radius: 50px;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        cursor: pointer;
+        transition: 0.4s;
+        box-shadow: 0 0 15px rgba(0, 242, 255, 0.4);
+        overflow: visible;
+    }
+
+    /* ⚡ Pulsing outer ring for attraction */
+    .sentinel-manual-trigger::after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        border-radius: 50px;
+        border: 2px solid #00f2ff;
+        animation: sonar-pulse 2s infinite;
+        pointer-events: none;
+    }
+
+    @keyframes sonar-pulse {
+        0% { transform: scale(1); opacity: 1; }
+        100% { transform: scale(1.4); opacity: 0; }
+    }
+
+    .sentinel-manual-trigger:hover {
+        background: #00f2ff;
+        color: #000;
+        box-shadow: 0 0 30px #00f2ff;
+    }
+
+    .icon-spin {
+        animation: spin-slow 4s infinite linear;
+    }
+
+    @keyframes spin-slow {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+</style>
+
+
+
+
+
+
+
+
+
+
+
+<style>
+
+
+
+/* Sidebar and General Aesthetics */
+.history-item {
+    background: rgba(0, 242, 255, 0.03);
+    border: 1px solid rgba(0, 242, 255, 0.1);
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    transition: 0.3s;
+}
+.history-item:hover {
+    background: rgba(0, 242, 255, 0.1);
+    border-color: var(--cyan);
+}
+</style>
+    
+
+
+<div id="ai-terminal-wrapper" style="position: fixed; bottom: 20px; right: 20px; width: 350px; height: auto; min-width: 250px; min-height: 100px; z-index: 9999; display: flex; flex-direction: column;">
+    
+
+    <div id="resizer-left" style="position: absolute; left: -5px; top: 0; width: 10px; height: 100%; cursor: col-resize; z-index: 10001;"></div>
+    <div id="resizer-top" style="position: absolute; top: -5px; left: 0; width: 100%; height: 10px; cursor: row-resize; z-index: 10001;"></div>
+
+
+    <div id="terminal-drag-header" style="cursor: move; background: rgba(0, 242, 255, 0.15); padding: 6px 12px; border: 1px solid var(--cyan); display: flex; justify-content: space-between; align-items: center; border-bottom: none; border-radius: 8px 8px 0 0;">
+        <span style="font-size: 9px; color: var(--cyan); letter-spacing: 2px; font-weight: bold;">GNov_SENTINEL_LINK</span>
+        <div style="width: 8px; height: 8px; background: var(--cyan); border-radius: 50%; box-shadow: 0 0 8px var(--cyan);"></div>
+    </div>
+
+    <div id="chat-input-container" style="display: flex; align-items: center; background: rgba(0, 0, 0, 0.8); border: 1px solid var(--cyan); padding: 8px; border-radius: 0 0 8px 8px;">
+        <label for="gemy-upload" style="cursor: pointer; padding: 0 10px; color: var(--cyan); font-size: 18px; transition: 0.3s;">
+            <input type="file" id="gemy-upload" style="display: none;" onchange="handleGemyUpload(this)">
+            📎
+        </label>
+
+
+
+        <input type="text" id="user-input-field" placeholder="Command Sentinel..." autocomplete="off" style="flex: 1; background: transparent; border: none; color: #fff; outline: none; font-size: 12px;">
+        
+        <button id="send-btn" style="background: transparent; border: none; color: var(--cyan); cursor: pointer; font-size: 20px; padding-left: 10px;">⤐</button>
+    </div>
+</div>
+
+ <script>
+
+  
+
+
+</script>
+
+<script>
+///--- 🛸 TERMINAL DRAG LOGIC (Commander Mode) ---
+(function setupTerminalDrag() {
+    const terminalWrapper = document.getElementById("ai-terminal-wrapper");
+    const dragHeader = document.getElementById("terminal-drag-header");
+
+    if (!terminalWrapper || !dragHeader) return;
+
+    let isDraggingTerminal = false;
+    let terminalOffset = [0, 0];
+
+    dragHeader.addEventListener('mousedown', (e) => {
+        isDraggingTerminal = true;
+        document.body.style.userSelect = 'none';
+        terminalOffset = [
+            terminalWrapper.offsetLeft - e.clientX,
+            terminalWrapper.offsetTop - e.clientY
+        ];
+    }, true);
+
+    document.addEventListener('mouseup', () => { 
+        isDraggingTerminal = false; 
+        document.body.style.userSelect = 'auto';
+    }, true);
+
+    document.addEventListener('mousemove', (e) => {
+        if (isDraggingTerminal) {
+            e.preventDefault();
+            terminalWrapper.style.left = (e.clientX + terminalOffset[0]) + 'px';
+            terminalWrapper.style.top  = (e.clientY + terminalOffset[1]) + 'px';
+            terminalWrapper.style.bottom = 'auto';
+            terminalWrapper.style.right = 'auto';
+        }
+    }, true);
+})();
+
+// --- 📎 GEMY FILE UPLOAD HANDLER ---
+function handleGemyUpload(input) {
+    const file = input.files[0];
+    if (file) {
+        addLog(`[SYSTEM]: Sending ${file.name} to GNov Neural Core...`, 'system');
+        setTimeout(() => {
+            addLog(`I've received ${file.name}! GNov is scanning for anomalies. 🛡️🚀`, 'gemy');
+        }, 1500);
+    }
+}
+
+// --- ✉️ COMMAND & MESSAGING SYSTEM ---
+const inputField = document.getElementById('user-input-field');
+const sendBtn = document.getElementById('send-btn');
+
+function sendMessage() {
+    if (!inputField) return;
+    const message = inputField.value.trim();
+    if (message !== "") {
+        addLog(message, 'user'); 
+        showThinking(); 
+        if (socket && socket.connected) {
+            socket.emit('user_message', { message: message });
+        }
+        inputField.value = ""; 
+    }
+}
+
+// 🛡️ STABLE INPUT LISTENER (Wipes out the reload bug)
+if (inputField) {
+    inputField.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // 👈 Reload ko yahi block kiya
+            sendMessage();
+        }
+    });
+}
+
+if (sendBtn) {
+    sendBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        sendMessage();
+    });
+}
+
+// --- 🤖 TERMINAL VISIBILITY CONTROLS ---
+function toggleGemyTerminal() {
+    const terminal = document.getElementById("ai-terminal-wrapper");
+    const launcher = document.getElementById("gemy-launcher");
+
+    if (!terminal) return;
+
+    if (terminal.classList.contains('terminal-hidden')) {
+        terminal.classList.remove('terminal-hidden');
+        if (launcher) launcher.style.borderColor = "var(--cyan)";
+        console.log("🛡️ Neural Link: Visible");
+    } else {
+        terminal.classList.add('terminal-hidden');
+        if (launcher) launcher.style.borderColor = "#444"; 
+        console.log("🛡️ Neural Link: Standby");
+    }
+}
+
+// 🛡️ Ensure Terminal starts hidden on boot
+window.addEventListener('load', () => {
+    const terminal = document.getElementById("ai-terminal-wrapper");
+    if (terminal) terminal.classList.add('terminal-hidden');
+});
+</script>
+
+
+<script>
+
+////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>
+
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+//lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+//mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+//nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+/////////////////////////////////////////////////////////////////////////// bubble handle
+
+// 🛡️ GLOBAL LOCKS (Top of your script)
+// let isGemyTalking = false; 
+
+function handleAgentSpeech(data) {
+    const text = data.text || data.message;
+    if (!text) return;
+    if (isMuted) return;
+
+    hideThinking(); 
+    const msgId = "type-" + Date.now();
+    addLog("...", 'gemy', msgId); 
+
+    // 🤐 STEP 0: Force Stop everything else
+    window.speechSynthesis.cancel(); 
+    try { recognition.stop(); } catch(e) {} // Mic ko physically band karo
+    isGemyTalking = true;
+
+    const utterance = new SpeechSynthesisUtterance(text);
+
+    // 🎙️ STEP 1: VOICE SELECTION FIX
+    const voices = window.speechSynthesis.getVoices();
+    const maleVoice = voices.find(v => 
+        v.name.includes('Male') || v.name.includes('David') || v.name.includes('Google UK English Male')
+    );
+    if (maleVoice) utterance.voice = maleVoice;
+
+    // 🎭 STEP 2: TONE & LANG
+    utterance.pitch = 0.8; 
+    utterance.rate = 1.0; 
+    const containsHindi = /[\u0900-\u097F]/.test(text); 
+    utterance.lang = containsHindi ? 'hi-IN' : 'en-US';
+
+    // 🚀 STEP 3: START HANDLER
+    utterance.onstart = () => { 
+        console.log("🔊 G-Nov Speaking...");
+        typeWriter(text, msgId, 25); 
+        if(mainVideo) { 
+            mainVideo.play().catch(() => {});
+            mainVideo.classList.add('talking'); 
+        }
+    };
+
+    // 🛑 STEP 4: END HANDLER (The Fix for Repeating)
+    utterance.onend = () => { 
+        console.log("🔇 G-Nov Finished.");
+        isGemyTalking = false; // Pehle lock kholo
+
+        if(mainVideo) { 
+            mainVideo.pause(); 
+            mainVideo.classList.remove('talking'); 
+        }
+
+        // 🛡️ Mic Auto-Restart with Buffer Delay
+        const btn = document.getElementById('mic-toggle');
+        if (btn && btn.classList.contains('on')) {
+            // 1.5s ka gap taaki echo khatam ho jaye
+            setTimeout(() => { 
+                if (!window.speechSynthesis.speaking && !isGemyTalking) {
+                    try { recognition.start(); } catch(e) { console.log("Mic already active"); }
+                }
+            }, 1500); 
+        }
+    };
+
+    window.speechSynthesis.speak(utterance);
+}
+
+
+function toggleHistoryOverlay() {
+    const overlay = document.getElementById('history-overlay');
+    if (overlay) {
+        if (overlay.classList.contains('hidden')) {
+            overlay.classList.remove('hidden');
+            overlay.style.display = 'flex'; // Modal mode ON
+            console.log("📂 Archives Deployment: Successful.");
+        } else {
+            overlay.classList.add('hidden');
+            overlay.style.display = 'none';
+        }
+    }
+}
+
+async function loadSession(sessionId) {
+    if (socket && socket.connected) {
+        addLog(`[0] System: Fetching neural stream for ${sessionId}...`, 'system');
+        
+        // 🎯 Ensure your backend event name matches (load_session or get_session_data)
+        socket.emit('load_session', { session_id: sessionId }); 
+        
+        toggleHistoryOverlay(); // Kaam hone ke baad modal band
+    } else {
+        addLog("[0] Critical: Neural Link Offline.", 'system');
+    }
+}
+</script>
+    <style>
+       
+
+
+
+
+/* 
+       
+
+////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>
+
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+//lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+//mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+//nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+
+////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ --> */
+/*  voice pulse  
+*/
+
+
+
+/* ✨ Voice Activity Glow */
+
+.voice-active-border {
+    box-shadow: 0 0 25px var(--cyan), inset 0 0 15px var(--cyan) !important;
+    border-color: #fff !important;
+    transition: 0.1s ease-out;
+}
+
+
+/*chat input 
+*/
+
+
+
+
+ #gemy-launcher {
+    position: fixed;
+    
+    right: 480px; 
+    width: 29px;
+    height: 29px;
+    background: #05080a;
+    border: 1px solid var(--cyan);
+    border-radius: 10%;
+    cursor: pointer;
+    z-index: 10002; /* Terminal se bhi upar */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 15px rgba(0, 242, 255, 0.4);
+    transition: all 0.3s ease;
+}
+
+#gemy-launcher:hover {
+    transform: scale(1.1) rotate(15deg);
+    box-shadow: 0 0 25px var(--cyan);
+}
+
+.launcher-icon {
+    color: var(--cyan);
+    font-family: 'Orbitron', sans-serif;
+    font-weight: bold;
+    font-size: 12px;
+    z-index: 2;
+}
+
+.launcher-glow {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: var(--cyan);
+    border-radius: 50%;
+    opacity: 0.1;
+    animation: pulse-launcher 2s infinite;
+}
+
+@keyframes pulse-launcher {
+    0% { transform: scale(1); opacity: 0.2; }
+    50% { transform: scale(1.3); opacity: 0; }
+    100% { transform: scale(1); opacity: 0.2; }
+}
+
+/* 🚫 Hidden State for Terminal */
+.terminal-hidden {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: translateY(20px) scale(0.9) !important;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+
+
+
+#chat-input-container {
+    display: flex;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.4);
+    border-top: 1px solid var(--border);
+    gap: 10px;
+}
+
+#user-input-field {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--cyan);
+    padding: 8px 12px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    outline: none;
+    transition: 0.3s;
+}
+
+#user-input-field:focus {
+    border-color: var(--cyan);
+    box-shadow: 0 0 10px rgba(0, 242, 255, 0.2);
+}
+
+#send-btn {
+    background: transparent;
+    border: 1px solid var(--cyan);
+    color: var(--cyan);
+    padding: 0 15px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+#send-btn:hover {
+    background: var(--cyan);
+    color: black;
+    box-shadow: 0 0 15px var(--cyan);
+}
+
+
+    /* Naye Options ki Styling */
+    .sys-options {
+        background: rgb(0, 0, 0);
+        padding: 4px 12px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+
+    
+    .opt-btn {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        opacity: 6;
+        transition: all 0.3s;
+        padding: 4px;
+    }
+
+
+
+
+    .opt-btn:hover {
+        opacity: 1;
+        transform: scale(1.2);
+        text-shadow: 0 0 10px var(--cyan);
+    }
+
+    /* Active state (Jab hum backend se connect karenge) */
+    .opt-btn.on {
+        opacity: 1;
+        color: var(--cyan);
+        filter: drop-shadow(0 0 5px var(--cyan));
+    }
+
+    .sep {
+        width: 1px;
+        height: 16px;
+        background: var(--border);
+    }
+
+    .rec-red:hover {
+        color: #ff4444;
+        text-shadow: 0 0 10px #ff4444;
+    }
+
+    /* Recording Animation */
+    .recording-now {
+        animation: pulse-red 1.5s infinite;
+        opacity: 1;
+    }
+
+    @keyframes pulse-red {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.2); color: #ff4444; }
+        100% { transform: scale(1); }
+    }
+</style>
+<!--        
+
+
+
+////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>
+
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+//lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+//mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+//nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+
+////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->     
+    <div class="nav-group">
+        <button class="toggle-btn active" id="btn-left" onclick="togglePanel('left-panel', 'btn-left')">Agent</button>
+        <button class="toggle-btn active" id="btn-video" onclick="togglePanel('video-panel', 'btn-video')">Casting</button>
+        <button class="toggle-btn active" id="btn-report" onclick="togglePanel('report-panel', 'btn-report')">Reports</button>
+    </div>
+</header>
+ <div id="workspace">
+    <div id="left-panel" class="panel">
+        <div id="left-scroll-area" style="flex: 1; overflow-y: auto; overflow-x: hidden">
+            <div class="panel-header">CORE_AGENT [EYE_ON_UI]</div>
+            <div class="grid-environment">
+                <div class="moving-grid"></div>
+                <div class="energy-cage"></div>
+                <div class="grid-overlay-glow"></div>
+                <div id="video-wrapper">
+                    <video id="main-video" loop muted playsinline>
+                        <source src="/xyz.mp4" type="video/mp4">
+                       
+                    </video>
+            
+
+                     <div id="gnov-thinking-overlay" class="thinking-status">
+        THINKING<span class="dots-anim"></span>
+    </div> 
+
+
+
+        <div id="neural-sync-indicator" class="sync-idle">
+    <div class="glow-dot"></div>
+    <span class="sync-text">NEURAL_LISTENING</span>
+</div>
+
+
+<div id="agent-controls" class="hidden" style="display: flex; gap: 10px; margin-top: 15px; justify-content: center;">
+
+    <button class="ctrl-btn stop" onclick="handleStop()">⏹️ Stop</button>
+    <button class="ctrl-btn restart" onclick="handleRestart()" title="Neural System Reboot">🔄 Restart</button>
+  
+</div>
+<script>
+
+
+
+
+
+
+
+    //////222222222222222222222222222222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@2
+    ////@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@222
+// Function to toggle Thinking State
+// --- 🛰️ G-NOV STATE CONTROLLER ---
+function setGnovState(state) {
+    const video = document.getElementById('main-video');
+    const overlay = document.getElementById('gnov-thinking-overlay');
+
+    if (state === 'thinking') {
+        video.classList.add('avatar-blur');
+        overlay.classList.add('active');
+    } else {
+        video.classList.remove('avatar-blur');
+        overlay.classList.remove('active');
+    }
+}
+
+// Socket Triggers
+socket.on('user_message', () => setGnovState('thinking'));
+socket.on('agent_speech', () => setGnovState('idle'));
+</script>
+    
+</script>
+
+<style>
+    /* Processing Text Style */
+
+/* Processing Text exact center mein lane ke liye */
+.thinking-status {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 1000 !important;
+    color: #00f2ff;
+    font-family: 'Courier New', monospace;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-shadow: 0 0 10px #00f2ff, 0 0 20px #00f2ff;
+    letter-spacing: 3px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease-in-out;
+    white-space: nowrap;
+}
+
+/* Jab G-Nov soche tab ye class trigger hogi */
+.thinking-status.active {
+    opacity: 1 !important;
+}
+
+/* Video Blur logic */
+.avatar-blur {
+    filter: blur(15px) brightness(0.4) grayscale(0.5) !important;
+}
+
+/* Dots Animation */
+.dots-anim::after {
+    content: '';
+    animation: dots-cycle 1.5s infinite;
+}
+
+@keyframes dots-cycle {
+    0% { content: ''; }
+    33% { content: '.'; }
+    66% { content: '..'; }
+    100% { content: '...'; }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#neural-sync-indicator {
+    display: none; /* Pehle chhupa rahega */
+    flex-direction: column;
+    align-items: center;
+    margin-top: 10px;
+    gap: 5px;
+}
+
+.glow-dot {
+    width: 10px;
+    height: 10px;
+    background: var(--cyan);
+    border-radius: 50%;
+    box-shadow: 0 0 15px var(--cyan);
+    animation: neural-pulse 1.5s infinite;
+}
+
+.sync-text {
+    font-size: 8px;
+    color: var(--cyan);
+    letter-spacing: 2px;
+    font-family: monospace;
+    opacity: 0.8;
+}
+
+/* 🚀 JAB MIC ON HO TOH DIKHAO */
+#mic-toggle.on ~ #workspace #neural-sync-indicator, 
+.mic-active #neural-sync-indicator {
+    display: flex !important;
+}
+
+@keyframes neural-pulse {
+    0% { transform: scale(1); box-shadow: 0 0 10px var(--cyan); }
+    50% { transform: scale(1.5); box-shadow: 0 0 25px var(--cyan); opacity: 0.5; }
+    100% { transform: scale(1); box-shadow: 0 0 10px var(--cyan); }
+}
+    </style>
+
+
+
+
+
+
+<!-- 
+////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>
+
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+//lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+//mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+//nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+
+////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ --> 
+<script>
+// 🛡️ Commander's Simple Sync
+(function simpleSync() {
+    const micBtn = document.getElementById('mic-toggle');
+    const syncDot = document.getElementById('neural-sync-indicator');
+
+    if (micBtn && syncDot) {
+        const observer = new MutationObserver(() => {
+            if (micBtn.classList.contains('on')) {
+                syncDot.style.display = 'flex';
+                console.log("🟢 Gemy is listening visually now!");
+            } else {
+                syncDot.style.display = 'none';
+            }
+        });
+        observer.observe(micBtn, { attributes: true, attributeFilter: ['class'] });
+    }
+})();
+
+
+
+// --- 1. TOGGLE LOGIC (Merged & Improved) ---
+function togglePanel(panelId, btnId) {
+    const panel = document.getElementById(panelId);
+    const btn = document.getElementById(btnId);
+    const resizerH = document.getElementById('resizer-h');
+
+    if (!panel) return;
+
+    // Toggle the panel visibility
+    panel.classList.toggle('hidden');
+    
+    // ✨ Button Glow Update: Isse buttons ka cyan color on/off hoga
+    if (btn) {
+        btn.classList.toggle('active');
+    }
+
+    // 🛡️ Resizer Sync: Agar left panel hide ho toh handle bhi hide karo
+    if (panelId === 'left-panel' && resizerH) {
+        resizerH.style.display = panel.classList.contains('hidden') ? 'none' : 'block';
+    }
+}
+
+// --- 2. RESET LAYOUT (Restore Everything) ---
+function resetLayout() {
+    const panels = ['left-panel', 'video-panel', 'report-panel'];
+    const buttons = ['btn-left', 'btn-video', 'btn-report'];
+
+    panels.forEach(id => {
+        const p = document.getElementById(id);
+        if(p) p.classList.remove('hidden'); 
+    });
+
+    buttons.forEach(id => {
+        const b = document.getElementById(id);
+        if(b) b.classList.add('active'); 
+    });
+
+    const resizerH = document.getElementById('resizer-h');
+    if(resizerH) resizerH.style.display = 'block';
+
+    addLog("[0]System Layout Restored to Default.", 'system');
+}
+
+// --- 3. MASTER RESIZERS (X & Y Dual Axis) ---
+(function setupMasterResizers() {
+    const resizerH = document.getElementById('resizer-h');
+    const resizerV = document.getElementById('resizer-v');
+    const leftPanel = document.getElementById('left-panel');
+    const videoPanel = document.getElementById('video-panel');
+
+    // ↔️ X-Axis (Horizontal)
+    if (resizerH && leftPanel) {
+        let isResizingX = false;
+        resizerH.addEventListener('mousedown', (e) => {
+            isResizingX = true;
+            document.body.style.cursor = 'col-resize';
+            resizerH.classList.add('resizing-active');
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isResizingX) return;
+            let newWidth = e.clientX; 
+            if (newWidth > 150 && newWidth < window.innerWidth * 0.8) {
+                leftPanel.style.width = newWidth + 'px';
+                leftPanel.style.flex = `0 0 ${newWidth}px`; 
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            isResizingX = false;
+            document.body.style.cursor = 'default';
+            resizerH.classList.remove('resizing-active');
+        });
+    }
+
+    // ↕️ Y-Axis (Vertical)
+    if (resizerV && videoPanel) {
+        let isResizingY = false;
+        resizerV.addEventListener('mousedown', (e) => {
+            isResizingY = true;
+            document.body.style.cursor = 'row-resize';
+            resizerV.classList.add('resizing-active');
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isResizingY) return;
+            const rightContainer = document.getElementById('right-container');
+            const rect = rightContainer.getBoundingClientRect();
+            let newHeight = e.clientY - rect.top;
+
+            if (newHeight > 100 && newHeight < rect.height - 100) {
+                videoPanel.style.height = newHeight + 'px';
+                videoPanel.style.flex = `0 0 ${newHeight}px`; 
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            isResizingY = false;
+            document.body.style.cursor = 'default';
+            resizerV.classList.remove('resizing-active');
+        });
+    }
+})();
+
+</script>
+
+<style>
+
+
+/* Resizing ke waqt mouse selection aur transitions band karo */
+.resizing-h, .resizing-v {
+    background: var(--cyan) !important;
+    box-shadow: 0 0 15px var(--cyan);
+}
+
+/* Mouse cursor ko force karo jab tak resizing ho rahi hai */
+body.resizing {
+    cursor: col-resize !important;
+    user-select: none !important;
+}
+
+/* 🚫 Panels ko hide karne ke liye */
+.hidden {
+    display: none !important;
+}
+
+/* ✨ Active button ka glow effect */
+.toggle-btn.active {
+    border-color: var(--cyan) !important;
+    color: var(--cyan) !important;
+    box-shadow: 0 0 10px var(--cyan);
+    background: rgba(0, 242, 255, 0.1);
+}
+
+#right-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* 🛡️ Magic: Jab ek sub-panel hide ho, toh dusra apne aap stretch ho jaye */
+.sub-panel:not(.hidden) {
+    flex: 1;
+}
+
+
+    .ctrl-btn {
+        background: #22272e;
+        border: 1px solid var(--border);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: 0.3s;
+    }
+    .ctrl-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+    .stop:hover { border-color: #ff4444; color: #ff4444; }
+
+    .ctrl-btn {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--cyan);
+    color: var(--cyan);
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+    font-family: monospace;
+}
+
+.ctrl-btn:hover {
+    background: var(--cyan);
+    color: black;
+    box-shadow: 0 0 15px var(--cyan);
+}
+
+.ctrl-btn.stop:hover {
+    background: #ff3366;
+    border-color: #ff3366;
+    box-shadow: 0 0 15px #ff3366;
+}
+</style>
+
+
+
+
+
+
+<!-- 
+////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>
+
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+//lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+//mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+//nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+
+////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  -->
+                    <div class="agent-tag">GNov-01</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="resizer-h" id="resizer-h"></div>
+<!-- 
+    <div id="right-container" class="panel">
+        <div id="video-panel" class="sub-panel">
+            <div class="panel-header">LIVE_CASTING [EYES]</div>
+            
+            <div class="scan-bracket top-l"></div>
+            <div class="scan-bracket top-r"></div>
+            <div class="scan-bracket bot-l"></div>
+            <div class="scan-bracket bot-r"></div>
+
+            <div style="flex:1; display:flex; align-items:center; justify-content:center; color:#555; font-size: 12px;">
+                IDLE_STATE: WAITING_FOR_STREAM
+            </div>
+        </div>
+
+     
+        --><div id="right-container" class="panel" style="display: flex; flex-direction: column; height: 100%; overflow: hidden;">
+    
+    <div id="video-panel" class="sub-panel" style="height: 55%; min-height: 100px; position: relative; background: #000; display: flex; flex-direction: column;">
+        <div class="panel-header">LIVE_CASTING [EYES]</div>
+        
+        <div id="scanner-line" class="scan-pulse"></div> 
+        <div class="scan-bracket top-l"></div>
+        <div class="scan-bracket top-r"></div>
+        <div class="scan-bracket bot-l"></div>
+        <div class="scan-bracket bot-r"></div>
+
+        <div style="flex:1; display:flex; align-items:center; justify-content:center; color:#444; font-size: 10px; letter-spacing: 2px; font-family: 'Orbitron', sans-serif;">
+            <span class="glitch-text" data-text="IDLE_STATE: WAITING_FOR_STREAM">IDLE_STATE: WAITING_FOR_STREAM</span>
+        </div>
+    </div>
+
+    <div class="resizer-v" id="resizer-v" style="height: 6px; cursor: row-resize; background: rgba(0, 242, 255, 0.05); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); transition: 0.3s;"></div>
+
+    <div id="report-panel" class="sub-panel" style="flex: 1; display: flex; flex-direction: column; background: var(--panel); min-height: 100px;">
+        <div class="panel-header">INTELLIGENCE_REPORT [BRAIN]</div>
+        
+        <div id="ai-logs" style="padding:15px; font-family:'Courier New', monospace; font-size:11px; line-height:1.6; flex: 1; overflow-y: auto; background: rgba(0,0,0,0.4); scroll-behavior: smooth;">
+            <div style="color:var(--cyan); border-left: 2px solid var(--cyan); padding-left: 10px; margin-bottom: 5px;">[SYSTEM] Modular Interface V2.0... Online.</div>
+            <div style="color:#847b7b; opacity: 0.7;">[LOG] Syncing neural nodes with Alpha-Prime...</div>
+            <div style="color:#ec4c4c;">[WARN] Encrypted tunnel detected. Stabilizing...</div>
+            <div style="color:#696464;">[LOG] Sentinel Core 01 pulse: STABLE.</div>
+            <div style="color:#00ff37; text-shadow: 0 0 5px #00ff37;">[LOG] COMMANDER DETECTED. WAITING FOR INPUT...</div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* ⚡ Visual Enhancements for the Right Side */
+.sub-panel {
+    transition: background 0.3s ease;
+}
+
+#ai-logs::-webkit-scrollbar {
+    width: 3px;
+}
+
+#ai-logs::-webkit-scrollbar-thumb {
+    background: var(--cyan);
+    border-radius: 10px;
+}
+
+.resizer-v:hover {
+    background: var(--cyan) !important;
+    box-shadow: 0 0 15px var(--cyan);
+}
+
+.scan-pulse {
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background: var(--cyan);
+    opacity: 0.3;
+    box-shadow: 0 0 10px var(--cyan);
+    animation: scan-vertical 4s linear infinite;
+    pointer-events: none;
+    z-index: 5;
+}
+
+@keyframes scan-vertical {
+    0% { top: 0; }
+    100% { top: 100%; }
+}
+</style>
+
+
+<!-- 
+
+////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj
+9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkoooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo8888888888888
+//llllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllloooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
+//mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmlllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+//nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+
+////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+ 
+<!-- 
+
+< duplicate socket.io include removed (already included in <head>) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+   
+        <script> ////
+// ==========================================
+// 🛡️ CONFIG & GLOBAL VARIABLES
+// ==========================================
+// Single Stable Socket Connection
+
+
+// let socket = null;
+
+// Global Constants (Dono jagah se utha kar ek saath kar diye hain)
+const synth = window.speechSynthesis;
+const mainVideo = document.getElementById('main-video');
+const logContainer = document.getElementById('ai-logs');
+
+// Speech Recognition Setup
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+
+if (recognition) { 
+    recognition.continuous = true; 
+    recognition.interimResults = false; 
+    recognition.lang = 'en-US'; 
+}
+
+
+
+
+
+
+
+////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>
+
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+//lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+//mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+//nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+
+////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+// ==========================================
+// 🎤 MIC HANDLER (Action Mode)
+// ==========================================
+
+// 🎙️ Global variable taaki hum mic ko puri tarah off kar sakein
+let micStream = null; 
+
+async function handleMic() {
+    const btn = document.getElementById('mic-toggle');
+    const controls = document.getElementById('agent-controls');
+    
+    if (!recognition) return addLog("[0]Error: Neural Listener (API) Missing!", 'system');
+
+    btn.classList.toggle('on');
+    
+    if (btn.classList.contains('on')) {
+        try {
+            // ✨ 1. Mic Access with Noise Cancellation
+            micStream = await navigator.mediaDevices.getUserMedia({ 
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true 
+                } 
+            });
+
+            // 🛡️ 2. Restart Safety: Agar pehle se chal raha ho toh pehle stop karo
+            try { recognition.stop(); } catch(e) {}
+
+            // ✨ 3. Thoda sa delay (100ms) taaki browser relax ho jaye
+            setTimeout(() => {
+                recognition.start();
+                console.log("🎤 G-Nov is now actively listening...");
+            }, 100);
+            
+            if (controls) controls.classList.remove('hidden');
+            addLog("[0]Gemy is listening for your command...", 'system');
+            
+        } catch(e) { 
+            console.error("🚨 Mic Permission Error:", e);
+            addLog("System Alert: Mic Access Denied!", 'system'); 
+            btn.classList.remove('on');
+        }
+    } else {
+        // 🛑 4. Full Cleanup: Mic ko puri tarah band karo
+        try { recognition.stop(); } catch(e) {}
+        
+        if (micStream) {
+            micStream.getTracks().forEach(track => track.stop()); // Mic ki light off ho jayegi
+            micStream = null;
+        }
+
+        if (controls) controls.classList.add('hidden');
+        addLog("Neural link standby. Mic Offline.", 'system');
+    }
+}
+
+
+
+
+recognition.onerror = (event) => {
+    console.error("🎤 Mic Error:", event.error);
+    const pulse = document.getElementById('voice-pulse-popup');
+    if (pulse) pulse.classList.add('pulse-hidden');
+};
+
+recognition.onend = () => {
+    const pulse = document.getElementById('voice-pulse-popup');
+    const btn = document.getElementById('mic-toggle');
+    if (pulse) pulse.classList.add('pulse-hidden');
+
+    // Stability Fix: 500ms ka delay taaki browser mic ko "release" kar sake
+    setTimeout(() => {
+        if (btn && btn.classList.contains('on') && !synth.speaking) {
+            try {
+                recognition.start();
+            } catch(e) {
+                // Ignore "Already Started" errors
+            }
+        }
+    }, 500);
+};
+
+
+
+
+////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>
+
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+//lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+//mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+//nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+
+////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+////////////////////////////////////////////////////////////
+///----------------------=============================\
+//============ camera==========================================
+
+let visionActive = false; 
+async function handleCam() {
+    const scanner = document.getElementById('scanner-box');
+    const video = document.getElementById('scanner-video');
+    const btn = document.getElementById('cam-toggle');
+
+    visionActive = !visionActive;
+
+    if (visionActive) {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: "user", width: 400, height: 300 } 
+            });
+            camStream = stream;
+            
+            if (video) {
+                video.srcObject = stream;
+                video.onloadedmetadata = () => video.play();
+            }
+
+            scanner.style.display = 'block';
+            btn.classList.add('on');
+            
+            // 🎯 Handle se drag start karo
+            const handle = document.getElementById('scanner-handle');
+            makeDraggable(scanner, handle); 
+
+            addLog("[0] System: Lens active. Drag via top bar.", 'system');
+        } catch (err) {
+            visionActive = false;
+            addLog("[0]Error: Camera access denied.", 'system');
+        }
+    } else {
+        if (camStream) camStream.getTracks().forEach(t => t.stop());
+        scanner.style.display = 'none';
+        btn.classList.remove('on');
+    }
+}
+
+// 🖱️ IMPROVED DRAG LOGIC
+function makeDraggable(el, handle) {
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    
+    handle.onmousedown = dragMouseDown;
+
+    function dragMouseDown(e) {
+        e.preventDefault();
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        document.onmousemove = elementDrag;
+    }
+
+    function elementDrag(e) {
+        e.preventDefault();
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        el.style.top = (el.offsetTop - pos2) + "px";
+        el.style.left = (el.offsetLeft - pos1) + "px";
+    }
+
+    function closeDragElement() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+        triggerCyberScan(); // Drop karte hi photo bhej do
+    }
+}
+
+
+
+
+function triggerCyberScan() {
+    if (!visionActive) return;
+
+    const scanner = document.getElementById('scanner-box');
+    socket.emit('hardware_status_update', { sensor: 'VISION', status: 'ACTIVE' });
+    
+    // 🎯 Sniper Box ki location aur size nikalna
+    const rect = scanner.getBoundingClientRect();
+    
+    // 📸 Specific Area Capture Logic
+    // Hum poori screen capture karke usse is 'rect' ke hisaab se crop karenge
+    const croppedImage = captureSpecificArea(rect.left, rect.top, rect.width, rect.height);
+    
+    if (socket && socket.connected) {
+        // 📡 Sending specifically targeted data to Port 5004
+        socket.emit('gemy_cyber_scan', { 
+            image: croppedImage,
+            context: "Targeted Sniper Scan" 
+        });
+        
+        emit('logs', { message: "[0] [NEURAL]: Sniper Scan Dispatched. Analyzing target area..." });
+    }
+}
+
+
+
+
+////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>
+
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+//lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+//mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+//nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+
+////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+// ==========================================
+// 🚩 1. GLOBAL CONTROLS & FLAGS
+// ==========================================
+let visionTriggered = false;
+
+
+// 📸 G-NOV'S UNIVERSAL EYES (Updated)
+function captureUniversalScreen() {
+    // Ye check karega ki Screen Mirror chalu hai ya Sniper Box
+    const mirror = document.getElementById('neural-mirror');
+    const sniper = document.getElementById('scanner-video');
+    
+    // Priority: Jo active ho use uthao
+    const activeSource = (mirror && mirror.style.display !== 'none') ? mirror : sniper;
+
+    if (!activeSource || activeSource.readyState < 2) return null;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = activeSource.videoWidth;
+    canvas.height = activeSource.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(activeSource, 0, 0, canvas.width, canvas.height);
+    
+    // Quality 0.5 rakhi hai taaki manual click fast jaye
+    return canvas.toDataURL('image/jpeg', 0.5); 
+}
+
+// 🎯 MANUAL VISION TRIGGER (Jab Commander click kare)
+document.addEventListener('mousedown', (e) => {
+    const micBtn = document.getElementById('mic-toggle');
+    const castBtn = document.getElementById('cast-toggle');
+
+    // Sirf tab trigger ho jab Mic ON ho aur koi stream (Cast/Cam) active ho
+    if (micBtn && micBtn.classList.contains('on') && (visionStream || visionActive)) {
+        const snapshot = captureUniversalScreen();
+        if (snapshot && socket && socket.connected) {
+            // Turant Pulse dikhao
+            const scannerLine = document.getElementById('scanner-line');
+            if(scannerLine) {
+                scannerLine.style.display = 'block';
+                setTimeout(() => scannerLine.style.display = 'none', 2000);
+            }
+
+            socket.emit('gemy_neural_sync', { 
+                text: "Commander clicked the sector. Manual scan initiated.", 
+                image: snapshot 
+            });
+            console.log("🎯 Manual Tactical Snapshot Sent.");
+        }
+    }
+});
+
+
+// 🎯 3. VISION TRIGGER (Click on screen to see)
+document.addEventListener('mousedown', (e) => {
+    const btn = document.getElementById('mic-toggle');
+    if (btn && btn.classList.contains('on')) {
+        visionTriggered = true; 
+        console.log("🎯 Vision Armed.");
+    }
+});
+
+
+
+
+
+////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>
+
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+//lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+//mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+//nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+
+////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+recognition.onresult = (event) => {
+    if (isGemyTalking || window.speechSynthesis.speaking) {
+        console.log("🤫 Gemy is occupied... holding input.");
+        return;
+    }
+
+    let transcript = '';
+    for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) transcript += event.results[i][0].transcript;
+    }
+
+    const cleanTranscript = transcript.trim();
+    if (cleanTranscript.length > 2) {
+        const cmd = cleanTranscript.toLowerCase();
+        console.log("🎙️ Sovereign Input Captured:", cmd);
+
+        let isActionTaken = false;
+
+        // --- 🛡️ ZONE 1: HARDWARE & SYSTEM (Instant Local Control) ---
+        // 📸 Camera/Vision
+        if (cmd.includes("camera") || cmd.includes("lens") || cmd.includes("vision on")) {
+            handleCam();
+            addLog("[0] 🛠️ SYSTEM: Visual Sensors Armed.", 'system');
+            isActionTaken = true;
+        } 
+        // 🖥️ Screen Casting
+        else if (cmd.includes("screen") || cmd.includes("cast") || cmd.includes("share")) {
+            handleCast();
+            addLog("[0] 🛠️ SYSTEM: Neural Stream Initialized.", 'system');
+            isActionTaken = true;
+        }
+        // 🔊 Speaker/Audio Control
+        else if (cmd.includes("unmute") || cmd.includes("audio on") || cmd.includes("speaker on")) {
+            if(isMuted) handleSpeaker(); 
+            addLog("[0] 🛠️ SYSTEM: Audio Gateway Restored.", 'system');
+            isActionTaken = true;
+        }
+        // 🛑 Stop/Emergency Terminate
+        else if (cmd.includes("stop or off") || cmd.includes("standby") || cmd.includes("terminate") || cmd.includes("mic off or screen off")) {
+            handleStop();
+            isActionTaken = true;
+        }
+
+        // --- ⚡ ZONE 2: EXECUTIVE ACTIONS (Google Resources & Magic) ---
+        // Yahan 'Search', 'Find', 'Execute', 'Note' jaise saare kaam handle honge
+        else if (cmd.includes("execute") || cmd.includes("command") || cmd.includes("gnov do") || 
+                 cmd.includes("search") || cmd.includes("find") || cmd.includes("note this")) {
+            
+            console.log("🚀 ROUTING TO EXECUTIVE NODE...");
+            addLog(cleanTranscript, 'user');
+            showThinking();
+            
+            if (socket && socket.connected) {
+                socket.emit('gnov_executive_command', { 
+                    command: cleanTranscript,
+                    context: "NON_SENSITIVE_TASK" // Abhi Google Resources ke liye
+                });
+            }
+            isActionTaken = true;
+        }
+
+        // --- 📡 ZONE 3: CONVERSATIONAL SYNC (Standard Gemini) ---
+        if (!isActionTaken) {
+            console.log("💬 ROUTING TO NEURAL SYNC (Chat)...");
+            addLog(cleanTranscript, 'user');
+            showThinking();
+           
+
+            let snapshot = visionTriggered ? captureScreen() : null;
+            visionTriggered = false;
+
+            if (socket && socket.connected) {
+                socket.emit('gemy_neural_sync', { 
+                    text: cleanTranscript, 
+                    image: snapshot 
+                });
+            }
+        }
+
+        try { recognition.stop(); } catch(e) {}
+    }
+};
+
+// 🛡️ 5. MIC AUTO-RESTART (Reliable Version - No Changes Needed)
+recognition.onend = () => {
+    const btn = document.getElementById('mic-toggle');
+    if (btn && btn.classList.contains('on')) {
+        setTimeout(() => {
+            if (!window.speechSynthesis.speaking && !isGemyTalking) {
+                try { recognition.start(); } catch(e) {}
+            } else {
+                setTimeout(() => recognition.onend(), 1000);
+            }
+        }, 1500);
+    }
+};
+
+
+
+
+////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>
+
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+//lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+//mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+//nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+
+////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+// ==========================================
+// 🔊 6. GEMY SPEECH & VIDEO SYNC
+// ==========================================
+socket.on('agent_speech', (data) => {
+    const wrapper = document.getElementById('ai-terminal-wrapper');
+    const text = data.text || data.message;
+    if (!text) return;
+
+    // 🤫 HARD LOCK (Syncing Variable Names)
+    isGemyTalking = true; 
+    if (recognition) {
+        try { recognition.abort(); } catch(e) {} 
+    }
+
+    // 🚨 SMART UI REACTION
+    const isAlert = /alert|danger|stop|phishing|error|vulnerability/i.test(text);
+    if (wrapper) {
+        wrapper.classList.toggle('terminal-alert', isAlert);
+        wrapper.classList.toggle('terminal-secure', !isAlert);
+    }
+
+    hideThinking(); 
+    const msgId = "type-" + Date.now();
+    addLog(text, 'gemy', msgId);
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    
+    // Voice Config
+    const voices = window.speechSynthesis.getVoices();
+    utterance.voice = voices.find(v => v.name.includes('Male')) || voices[0];
+    utterance.pitch = 0.95; 
+    utterance.rate = 1.0;
+
+    utterance.onstart = () => { 
+        isGemyTalking = true; // Reinforce lock
+        typeWriter(text, msgId, 25); 
+        if(mainVideo) { 
+            mainVideo.play().catch(() => {});
+            mainVideo.classList.add('talking'); 
+        }
+    };
+
+    utterance.onend = () => { 
+        if(mainVideo) { 
+            mainVideo.pause(); 
+            mainVideo.classList.remove('talking'); 
+        }
+        // 🎤 RELEASE LOCK: 2 seconds after finishing to be safe
+        setTimeout(() => { 
+            isGemyTalking = false; 
+            const btn = document.getElementById('mic-toggle');
+            if (btn && btn.classList.contains('on')) {
+                try { recognition.start(); } catch(e) {}
+            }
+        }, 2000); 
+    };
+
+    window.speechSynthesis.speak(utterance);
+});
+
+
+///////////////////==================================================
+/////type writer is working here dont worry 
+//////////============================================================
+function typeWriter(text, elementId, speed = 30) {
+    let i = 0;
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    element.innerHTML = ""; 
+
+    function type() {
+        if (i < text.length) {
+            // ✨ Typing effect with cursor
+            element.innerHTML = text.substring(0, i + 1) + '<span class="typing-cursor">|</span>';
+            i++;
+            
+            // Auto-scroll logic
+            if (logContainer) logContainer.scrollTop = logContainer.scrollHeight;
+            
+            setTimeout(type, speed);
+        } else {
+            // ✅ Typing Finish: Cursor hatao aur final text dalo
+            element.innerHTML = text; 
+            if (logContainer) logContainer.scrollTop = logContainer.scrollHeight;
+
+            // ⏺️ GHOST RECORDER SYNC: 
+            // Jab typing khatam ho jaye, tabhi report mein dalo
+            if (typeof isRecording !== 'undefined' && isRecording) {
+                const time = new Date().toLocaleTimeString();
+                // Hum missionLogs mein Gemy ka asli response push kar rahe hain
+                missionLogs.push(`[${time}] GEMY: ${text}`);
+                console.log("📝 Neural Log Updated: Gemy's full response captured.");
+            }
+        }
+    }
+    type();
+}
+
+
+
+// // ==========================================
+// // 🌀 UI UTILS (Thinking, Logs, Copy)
+// // ==========================================
+function showThinking() {
+    if(document.getElementById('gemy-thinking')) return;
+    const thinkingDiv = document.createElement('div');
+    thinkingDiv.id = 'gemy-thinking';
+    thinkingDiv.className = 'thinking-bubble';
+    thinkingDiv.innerHTML = `
+        <div class="gemy-core"><div class="ring"></div><div class="ring"></div><div class="core-center"></div></div>
+        <div class="thinking-text">Gemy_Core: <span id="sync-val">0</span>%<div style="font-size: 8px; opacity: 0.6;">Establishing Neural Link...</div></div>
+    `;
+    logContainer.appendChild(thinkingDiv);
+    logContainer.scrollTop = logContainer.scrollHeight;
+
+    let val = 0;
+    const syncInterval = setInterval(() => {
+        const syncEl = document.getElementById('sync-val');
+        if (syncEl && val < 99) {
+            val += Math.floor(Math.random() * 15);
+            syncEl.innerText = val > 99 ? 99 : val;
+        } else { clearInterval(syncInterval); }
+    }, 150);
+
+
+    if(mainVideo) mainVideo.style.filter = "brightness(0.4) blur(2px)";
+}
+
+function hideThinking() {
+    const el = document.getElementById('gemy-thinking');
+    if (el) el.remove();
+
+      if(mainVideo) mainVideo.style.filter = "drop-shadow(0 0 30px #00ffff)";
+}
+
+
+
+
+
+////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>
+
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+//lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+//mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+//nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+
+////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+// ==========================================
+// 🕹️ MASTER CONTROLS
+// ==========================================
+// 🚩 1. Sabse upar ye line add karo (agar pehle se nahi hai)
+let micShouldBeEnabled = false; 
+
+function handleStop() {
+    // 🛡️ Sabse pehle loop todne wala flag set karo
+    micShouldBeEnabled = false; 
+    
+    const btn = document.getElementById('mic-toggle');
+    if(btn) btn.classList.remove('on');
+
+    // 🛑 Forcefully Mic aur Recognition band karo
+    if (recognition) {
+        recognition.stop(); 
+        // Force fully abort agar stop se kaam na chale
+        try { recognition.abort(); } catch(e) {} 
+    }
+
+    // 🔊 G-Nov ki awaaz turant band karo
+    if (synth) synth.cancel();
+
+    // 🎥 Video reset
+    if(mainVideo) { 
+        mainVideo.pause(); 
+        mainVideo.classList.remove('talking'); 
+    }
+
+    hideThinking();
+    addLog("System Halted. Mic Secured.", 'system');
+}
+
+async function handleRestart() {
+    addLog("[0]Initiating full system reboot...", 'system');
+    handleStop(); // Ye ab mic ko puri tarah band kar dega
+    
+    if(socket) {
+        socket.disconnect();
+        setTimeout(() => {
+            socket.connect();
+            // Yahan hum dobara listen nahi karenge jab tak Commander Mic button na dabaye
+            addLog("System Online.Click again to activate mic. Ready for commands, Commander!", 'system');
+        }, 1000);
+    }
+}
+
+///////////////////////////copy 
+
+
+////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>
+
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+//lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+//mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+//nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+
+////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+async function copyToClipboard(btnElement) {
+    // Ye button ke parent ke andar 'message-text' class ko dhoondega
+    const textContainer = btnElement.parentElement.querySelector('.message-text');
+    const textToCopy = textContainer.innerText;
+    
+    try {
+        await navigator.clipboard.writeText(textToCopy);
+        
+        // Visual Feedback: Commander ko pata chalna chahiye copy ho gaya
+        const originalIcon = btnElement.innerHTML;
+        btnElement.innerHTML = "✅"; 
+        btnElement.style.color = "#";
+        btnElement.style.borderColor = "#00ffcc";
+        
+        setTimeout(() => {
+            btnElement.innerHTML = originalIcon;
+            btnElement.style.color = "";
+            btnElement.style.borderColor = "#333";
+        }, 1500);
+    } catch (err) {
+        console.error("Copy failed!", err);
+        alert("Copy link flickering! Check permissions.");
+    }
+}
+
+
+
+
+
+
+
+
+////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>
+
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+//lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+//mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+//nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+
+////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+    ///////////////////////////////////////////////////////////////////////////////////
+
+   (function setupResizers() {
+    const resizerH = document.getElementById('resizer-h');
+    const resizerV = document.getElementById('resizer-v');
+    const leftPanel = document.getElementById('left-panel');
+    const videoPanel = document.getElementById('video-panel');
+    
+    if (!resizerH && !resizerV) return;
+
+    // --- ↔️ Horizontal (X-Axis) Fix ---
+    if (resizerH && leftPanel) {
+        let isResizingH = false;
+        let startX, startWidth;
+
+        resizerH.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            isResizingH = true;
+            startX = e.clientX;
+            startWidth = leftPanel.offsetWidth; // Proper width detection
+            
+            document.body.style.cursor = 'col-resize';
+            resizerH.classList.add('resizing-active'); // Use your active class
+            
+            window.addEventListener('pointermove', onPointerMoveH);
+            window.addEventListener('pointerup', onPointerUpH);
+        });
+
+        const onPointerMoveH = (e) => {
+            if (!isResizingH) return;
+            const dx = e.clientX - startX;
+            const newWidth = startWidth + dx;
+
+            if (newWidth > 150 && newWidth < window.innerWidth * 0.8) {
+                // ✨ MAGIC FIX: Dono cheezein update karo
+                leftPanel.style.width = newWidth + 'px';
+                leftPanel.style.flex = `0 0 ${newWidth}px`; 
+            }
+        };
+
+        const onPointerUpH = () => {
+            isResizingH = false;
+            document.body.style.cursor = 'default';
+            resizerH.classList.remove('resizing-active');
+            window.removeEventListener('pointermove', onPointerMoveH);
+            window.removeEventListener('pointerup', onPointerUpH);
+        };
+    }
+
+    // --- ↕️ Vertical (Y-Axis) Fix ---
+    if (resizerV && videoPanel) {
+        let isResizingV = false;
+        let startY, startHeight;
+
+        resizerV.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            isResizingV = true;
+            startY = e.clientY;
+            startHeight = videoPanel.offsetHeight;
+            
+            document.body.style.cursor = 'row-resize';
+            resizerV.classList.add('resizing-active');
+            
+            window.addEventListener('pointermove', onPointerMoveV);
+            window.addEventListener('pointerup', onPointerUpV);
+        });
+
+        const onPointerMoveV = (e) => {
+            if (!isResizingV) return;
+            const dy = e.clientY - startY;
+            const newHeight = startHeight + dy;
+
+            if (newHeight > 100 && newHeight < window.innerHeight - 200) {
+                videoPanel.style.height = newHeight + 'px';
+                videoPanel.style.flex = `0 0 ${newHeight}px`; // ✨ Sync for Y-axis
+            }
+        };
+
+        const onPointerUpV = () => {
+            isResizingV = false;
+            document.body.style.cursor = 'default';
+            resizerV.classList.remove('resizing-active');
+            window.removeEventListener('pointermove', onPointerMoveV);
+            window.removeEventListener('pointerup', onPointerUpV);
+        };
+    }
+})();
+
+
+
+
+</script>
+
+<!-- 
+
+
+////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>
+
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+//lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+//mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+//nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+
+////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ --> 
+<style>
+/* Normal icon style */
+#cast-toggle, #mic-toggle {
+    transition: all 0.3s ease;
+    cursor: pointer;
+    color: #555; /* Default gray */
+    filter: drop-shadow(0 0 0px transparent);
+}
+
+/* Jab active ho (On) */
+#cast-toggle.on {
+    color: #00ffcc !important; /* Neon Cyan */
+    filter: drop-shadow(0 0 8px #00ffcc);
+    transform: scale(1.1);
+}
+
+#mic-toggle.on {
+    color: #ff3366 !important; /* Neon Pink/Red */
+    filter: drop-shadow(0 0 8px #ff3366);
+    transform: scale(1.1);
+}
+
+/* Log Container Styling */
+#ai-logs {
+    background: rgba(0, 0, 0, 0.8);
+    color: #00ff00; /* Matrix Green */
+    font-family: 'Courier New', Courier, monospace;
+    padding: 10px;
+    height: 200px;
+    overflow-y: auto;
+    border: 1px solid #333;
+    border-radius: 5px;
+}
+
+.log-entry .time {
+    color: #888;
+    margin-right: 10px;
+
+}
+
+/* Mic Active hone par glow karega */
+.opt-btn.on {
+    color: #ff3366 !important; 
+    filter: drop-shadow(0 0 10px #ff3366);
+    transform: scale(1.2);
+}
+</style>
+
+
+
+
+
+
+<div id="drag-box" class="hidden">
+    <div class="resizer tl"></div>
+    <div class="resizer tr"></div>
+    <div class="resizer bl"></div>
+    <div class="resizer br"></div>
+    
+    <div id="drag-header">
+        <span>GNov_SENTINEL_FLOAT</span>
+        <button onclick="toggleDragBox()" style="background:none; border:none; color:white; cursor:pointer;">✖</button>
+    </div>
+    <div id="drag-content">
+        <span id="float-speech-text">Gemy waiting...</span>
+    </div>
+</div>
+
+<style>
+    #drag-box {
+        position: absolute;
+        z-index: 1000;
+        background: rgba(21, 26, 37, 0.9);
+        border: 1px solid var(--cyan);
+        width: 250px;
+        border-radius: 8px;
+        box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
+        overflow: hidden;
+    }
+    #drag-header {
+        padding: 8px;
+        cursor: move;
+        background: var(--cyan);
+        color: black;
+        font-size: 10px;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+    }
+    #drag-content { padding: 15px; color: var(--cyan); font-family: monospace; font-size: 12px; }
+
+
+
+
+
+
+
+    #drag-box {
+    position: absolute;
+    z-index: 1000;
+    background: rgba(21, 26, 37, 0.95);
+    border: 1px solid var(--cyan);
+    min-width: 150px;
+    min-height: 100px;
+    width: 250px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Har corner par ek invisible handle */
+.resizer {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: transparent; /* Invisible rahenge par cursor change hoga */
+    z-index: 1001;
+}
+
+.resizer.tl { top: -5px; left: -5px; cursor: nw-resize; }
+.resizer.tr { top: -5px; right: -5px; cursor: ne-resize; }
+.resizer.bl { bottom: -5px; left: -5px; cursor: sw-resize; }
+.resizer.br { bottom: -5px; right: -5px; cursor: se-resize; }
+
+
+
+
+
+</style>
+
+
+<!-- 
+
+
+
+////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>
+
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+//lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+//mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+//nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+
+////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ --> 
+<script>
+function toggleDragBox() {
+    const box = document.getElementById('drag-box');
+    box.classList.toggle('hidden');
+    // Default position agar pehli baar khul raha ho
+    if(!box.classList.contains('hidden')) {
+        box.style.top = "100px";
+        box.style.left = "100px";
+    }
+}
+
+// Drag functionality (safe + pointer/touch support)
+const dragBoxEl = document.getElementById("drag-box");
+if (dragBoxEl) dragElement(dragBoxEl);
+
+function dragElement(elmnt) {
+    if (!elmnt) return;
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    const header = elmnt.querySelector('#drag-header');
+    if (header) {
+        header.addEventListener('pointerdown', dragMouseDown);
+        header.addEventListener('touchstart', dragMouseDown, { passive: false });
+    }
+
+    function dragMouseDown(e) {
+        e.preventDefault();
+        const ev = e.touches ? e.touches[0] : e;
+        pos3 = ev.clientX;
+        pos4 = ev.clientY;
+        window.addEventListener('pointermove', elementDrag);
+        window.addEventListener('pointerup', closeDragElement);
+        window.addEventListener('touchmove', elementDrag, { passive: false });
+        window.addEventListener('touchend', closeDragElement);
+    }
+
+    function elementDrag(e) {
+        e.preventDefault();
+        const ev = e.touches ? e.touches[0] : e;
+        pos1 = pos3 - ev.clientX;
+        pos2 = pos4 - ev.clientY;
+        pos3 = ev.clientX;
+        pos4 = ev.clientY;
+        try {
+            elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+            elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+        } catch (err) {
+            // ignore if styling not available
+        }
+    }
+
+    function closeDragElement() {
+        window.removeEventListener('pointermove', elementDrag);
+        window.removeEventListener('pointerup', closeDragElement);
+        window.removeEventListener('touchmove', elementDrag);
+        window.removeEventListener('touchend', closeDragElement);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+const el = document.getElementById("drag-box");
+if (el) {
+    const resizers = el.querySelectorAll(".resizer");
+    let currentResizer = null;
+
+    for (let resizer of resizers) {
+        resizer.addEventListener("pointerdown", mousedown);
+        resizer.addEventListener("touchstart", mousedown, { passive: false });
+    }
+
+    function mousedown(e) {
+        e.preventDefault();
+        currentResizer = e.target;
+        let prevX = e.clientX || (e.touches && e.touches[0].clientX);
+        let prevY = e.clientY || (e.touches && e.touches[0].clientY);
+
+        window.addEventListener('pointermove', mousemove);
+        window.addEventListener('pointerup', mouseup);
+        window.addEventListener('touchmove', mousemove, { passive: false });
+        window.addEventListener('touchend', mouseup);
+
+        function mousemove(e) {
+            e.preventDefault();
+            const ev = e.touches ? e.touches[0] : e;
+            const rect = el.getBoundingClientRect();
+            const dx = ev.clientX - prevX;
+            const dy = ev.clientY - prevY;
+
+            if (currentResizer.classList.contains("br")) {
+                el.style.width = rect.width + dx + "px";
+                el.style.height = rect.height + dy + "px";
+            } else if (currentResizer.classList.contains("bl")) {
+                el.style.width = rect.width - dx + "px";
+                el.style.height = rect.height + dy + "px";
+                el.style.left = rect.left + dx + "px";
+            } else if (currentResizer.classList.contains("tr")) {
+                el.style.width = rect.width + dx + "px";
+                el.style.height = rect.height - dy + "px";
+                el.style.top = rect.top + dy + "px";
+            } else {
+                el.style.width = rect.width - dx + "px";
+                el.style.height = rect.height - dy + "px";
+                el.style.top = rect.top + dy + "px";
+                el.style.left = rect.left + dx + "px";
+            }
+
+            prevX = ev.clientX;
+            prevY = ev.clientY;
+        }
+
+        function mouseup() {
+            window.removeEventListener('pointermove', mousemove);
+            window.removeEventListener('pointerup', mouseup);
+            window.removeEventListener('touchmove', mousemove);
+            window.removeEventListener('touchend', mouseup);
+        }
+    }
+}
+
+
+
+</script>
+<style>
+#report-panel {
+     flex: 1; 
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Panel ko pura space lene do */
+    overflow: hidden; 
+}
+
+#ai-logs {
+    flex: 1; 
+    overflow-y: auto; /* ✨ Yeh sabse zaruri hai: Automatic Vertical Scroll */
+    overflow-x: auto; /* Horizontal line ko rokne ke liye */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 15px;
+    scroll-behavior: smooth; /* Smooth scrolling ke liye */
+}
+
+/* 🛡️ Bubble Fix: Taki lambe words container se bahar na bhagein */
+.message-text {
+    word-wrap: break-word;
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+
+
+/* --- Fix for Resizing --- */
+#left-panel {
+    width: 30%; /* Starting width */
+    min-width: 150px; /* Commander, isse kam mat hone dena UI tut jayega */
+    max-width: 80vw;
+    flex-shrink: 0; /* 👈 Ye sabse zaruri hai! Isse flexbox panel ko squeeze nahi karega */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#right-container {
+   
+    display: flex;
+    flex-direction: column;
+    min-width: 0; /* Text expansion ko container ke andar rakhne ke liye */
+}
+
+#resizer-h {
+    width: 8px; /* Thoda mota rakhte hain pakadne mein asani ho */
+    background: transparent;
+    cursor: col-resize;
+    z-index: 100;
+    transition: background 0.2s;
+}
+
+#resizer-h:hover, .resizing-h {
+    background: var(--cyan) !important; /* Move karte waqt glow karega */
+    box-shadow: 0 0 10px var(--cyan);
+}
+
+
+
+
+
+
+
+
+/* --- GOD MODE CHAT BUBBLES --- */
+.log-entry {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+    max-width: 85%;
+    padding: 10px;
+    border-radius: 12px;
+    position: relative;
+    font-size: 13px;
+    line-height: 1.5;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Shiny (User) Message: Right Align */
+.user-msg {
+    align-self: flex-end;
+    background: rgb(68, 102, 160);
+    border-right: 3px solid #ff3366; /* Neon Pink for Shiny */
+    color: #fff;
+    border-radius: 12px 0px 12px 12px;
+}
+
+/* Gemy (AI) Message: Left Align */
+.gemy-msg {
+    align-self: flex-start;
+    background: rgba(0, 242, 255, 0.05);
+    border-left: 3px solid var(--cyan); /* Neon Cyan for Gemy */
+    color: #adbac7;
+    border-radius: 0px 12px 12px 12px;
+    box-shadow: inset 0 0 10px rgba(0, 242, 255, 0.05);
+}
+
+.msg-header {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+    opacity: 0.7;
+}
+
+.copy-btn-god {
+    align-self: flex-end;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    opacity: 0.5;
+    transition: 0.3s;
+}
+
+.copy-btn-god:hover { opacity: 1; transform: scale(1.2); }
+
+
+
+
+
+/* Gemy Neural Core Spinner */
+.thinking-bubble {
+    align-self: flex-start;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: rgba(0, 242, 255, 0.05);
+    padding: 15px;
+    border-radius: 15px;
+    border: 1px solid rgba(0, 242, 255, 0.2);
+    margin-bottom: 20px;
+}
+
+.gemy-core {
+    position: relative;
+    width: 40px;
+    height: 40px;
+}
+
+.ring {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 2px solid transparent;
+    border-top: 2px solid var(--cyan);
+    border-radius: 50%;
+    animation: spin-core 1.5s linear infinite;
+}
+
+.ring:nth-child(2) {
+    width: 70%; height: 70%;
+    top: 15%; left: 15%;
+    border-top: 2px solid #ff3366; /* Neon Pink */
+    animation-duration: 1s;
+    animation-direction: reverse;
+}
+
+.core-center {
+    position: absolute;
+    width: 20%; height: 20%;
+    top: 40%; left: 40%;
+    background: var(--cyan);
+    border-radius: 50%;
+    box-shadow: 0 0 15px var(--cyan);
+    animation: pulse-core 0.8s infinite alternate;
+}
+
+@keyframes spin-core {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse-core {
+    from { transform: scale(0.8); opacity: 0.5; }
+    to { transform: scale(1.2); opacity: 1; }
+}
+
+.thinking-text {
+    font-family: 'Orbitron', sans-serif; /* Agar ye font hai toh, warna monospace */
+    font-size: 11px;
+    color: var(--cyan);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+
+
+
+
+
+.ctrl-btn.restart:hover {
+    background: #ffcc00; /* Warning Yellow */
+    border-color: #ffcc00;
+    color: black;
+    box-shadow: 0 0 15px #ffcc00;
+}
+
+/* Thoda animation taki pata chale reboot ho raha hai */
+.rebooting {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+
+
+
+
+
+
+
+
+
+
+/* Buttons ko grid ke upar lane ke liye */
+#agent-controls {
+    position: relative;
+    z-index: 999; /* Isse buttons sabse upar rahenge */
+    pointer-events: auto !important; /* Click allow karne ke liye */
+}
+
+.opt-btn, .ctrl-btn {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* Header buttons fix */
+.sys-options {
+    position: relative;
+    z-index: 1000;
+}
+
+
+
+
+
+
+
+
+
+.opt-btn.on {
+    animation: mic-pulse 1.5s infinite;
+    color: #2fff00 !important;
+    filter: drop-shadow(0 0 15px #03ff08);
+}
+
+@keyframes mic-pulse {
+    0% { transform: scale(1.1); opacity: 1; }
+    50% { transform: scale(1.25); opacity: 0.7; box-shadow: 0 0 20px #ff3366; }
+    100% { transform: scale(1.1); opacity: 1; }
+}
+
+
+
+
+
+
+
+
+
+
+
+/* --- 🌐 NEURAL PACKET STYLING --- */
+.log-entry {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+    max-width: 88%;
+    padding: 12px 16px;
+    position: relative;
+    font-size: 13px;
+    line-height: 1.6;
+    animation: slideIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    backdrop-filter: blur(5px);
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px) scale(0.95); }
+    to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+/* 👤 COMMANDER SHINY (User) - Neon Pink Stealth Look */
+.user-msg {
+    align-self: flex-end;
+    background: rgba(255, 51, 102, 0.227);
+    border: 1px solid rgba(255, 93, 93, 0.641);
+    border-right: 4px solid #ff3366;
+    color: #fff;
+    border-radius: 15px 0px 15px 15px;
+    box-shadow: 0 0 15px rgba(255, 51, 102, 0.1);
+}
+
+/* 🛡️ GEMY SENTINEL (AI) - Cyber Cyan Matrix Look */
+.gemy-msg {
+    align-self: flex-start;
+    background: rgba(0, 242, 255, 0.09);
+    border: 1px solid rgba(0, 242, 255, 0.3);
+    border-left: 4px solid var(--cyan);
+    color: #adbac7;
+    border-radius: 0px 15px 15px 15px;
+    box-shadow: 0 0 20px rgba(0, 242, 255, 0.1), inset 0 0 10px rgba(0, 242, 255, 0.05);
+}
+
+/* ✨ Message Header (The Label) */
+.msg-header {
+    font-family: 'Courier New', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    opacity: 0.8;
+}
+
+.user-msg .msg-header { color: #ffffff; }
+.gemy-msg .msg-header { color: var(--cyan); }
+
+/* 🖱️ Copy Button - Hover pe chamkega */
+.copy-btn-god {
+    background: rgba(255, 255, 255, 0.319);
+    border: 1px solid rgb(0, 247, 255);
+    color: hsl(0, 0%, 100%);
+    padding: 2px 8px;
+    font-size: 9px;
+    border-radius: 4px;
+    transition: 0.3s;
+    text-transform: uppercase;
+}
+
+.copy-btn-god:hover {
+    background: var(--cyan);
+    color: #7d4629;
+    box-shadow: 0 0 10px var(--cyan);
+}
+
+
+
+@keyframes scan-move {
+    0% { top: 0; }
+    100% { top: 100%; }
+}
+</style>
+
+<style>
+
+
+
+    /*
+    cast system 
+    */
+
+
+/* 🖥️ Casting Active State */
+#cast-toggle.on {
+    color: var(--cyan) !important;
+    filter: drop-shadow(0 0 15px var(--cyan));
+    animation: cast-pulse 2s infinite;
+}
+
+@keyframes cast-pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; transform: scale(1.1); }
+    100% { opacity: 1; }
+}
+
+.vision-scanning-active {
+    border: 2px solid #ff3366 !important;
+    box-shadow: 0 0 30px rgba(255, 51, 102, 0.4) !important;
+}
+
+
+
+
+
+
+
+
+
+/* 🚨 ALERT STATE: Jab phishing ya error mile */
+.terminal-alert {
+    border-color: #ff3366 !important;
+    box-shadow: 0 0 30px rgba(255, 51, 102, 0.5) !important;
+    background: rgba(255, 51, 102, 0.1) !important;
+}
+
+/* 🟢 SECURE STATE: Jab sab normal ho */
+.terminal-secure {
+    border-color: #00ffcc !important;
+    box-shadow: 0 0 20px rgba(0, 255, 204, 0.3) !important;
+}
+
+
+
+
+
+
+/* 🛡️ System Logs: Inhe chota aur halka rakho */
+.log-entry.system {
+    opacity: 0.5;
+    font-size: 10px;
+    border-left: 2px solid #48485f;
+    margin-bottom: 5px;
+    background: transparent;
+}
+
+/* ✨ Gemy's Messages: Inhe bada aur bright rakho */
+.log-entry.gemy-msg {
+    opacity: 1;
+    font-size: 14px; /* Thoda bada text */
+    background: rgba(0, 242, 255, 0.1); /* Neon glow background */
+    border-left: 4px solid var(--cyan);
+    margin-bottom: 15px;
+    box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
+}
+</style>
+
+<script>
+/////////////////////////// link to nova 
+
+
+////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>
+
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+//lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+//mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+//nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+
+////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+
+
+
+let visionStream = null;
+let visionInterval = null;
+let heartbeatInterval = null; // 👈 Connection zinda rakhne ke liye
+
+
+
+
+
+function captureSpecificArea() {
+    const video = document.getElementById('scanner-video');
+    if (!video || video.readyState < 2) return null;
+
+    const canvas = document.createElement('canvas');
+    // Camera ki asli resolution uthao
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    
+    // Video frame ko canvas par chhapo
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Low quality (0.4) rakho taaki Gemini fast analyze kare
+    return canvas.toDataURL('image/jpeg', 0.4);
+}
+
+
+
+
+
+
+let isProcessingVision = false; // 👈 Loop Guard
+
+async function handleCast() {
+    const btn = document.getElementById('cast-toggle');
+    const videoPanel = document.getElementById('video-panel');
+    const scannerLine = document.getElementById('scanner-line');
+
+    // 1. Agar pehle se ON hai toh OFF karo
+    if (btn.classList.contains('on')) {
+        stopCasting();
+        return;
+    }
+
+    btn.classList.add('on');
+
+    try {
+        // 2. Neural Stream Start
+        visionStream = await navigator.mediaDevices.getDisplayMedia({ 
+            video: { 
+                displaySurface: "window",
+                frameRate: { ideal: 20 } 
+            },
+            audio: false 
+        });
+
+        addLog("[0][SYSTEM]: Neural Stream Active. Guard Protocol Engaged.", 'system');
+
+        // 3. UI Setup (Mirror create karna)
+        const idleText = videoPanel.querySelector('div:not(.panel-header):not(.scan-bracket)');
+        if(idleText) idleText.style.display = 'none';
+
+        let livePreview = document.getElementById('neural-mirror');
+        if (!livePreview) {
+            livePreview = document.createElement('video');
+            livePreview.id = 'neural-mirror';
+            livePreview.autoplay = true;
+            livePreview.playsinline = true;
+            livePreview.muted = true;
+            livePreview.style.width = '100%';
+            livePreview.style.height = 'calc(100% - 25px)';
+            livePreview.style.objectFit = 'contain';
+            livePreview.style.marginTop = '25px';
+            videoPanel.appendChild(livePreview);
+        }
+        
+        livePreview.srcObject = visionStream;
+        livePreview.style.display = 'block';
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // --- 🧠 DEEP ANALYSIS WITH GUARD (Har 50 Seconds) ---
+        const sendDeepAnalysis = () => {
+            // 🛡️ THE GUARD: Agar process ho raha hai ya Gemy bol raha hai, toh skip karo
+            if (isProcessingVision || isGemyTalking) {
+                console.log("⏳ Guard Active: Skipping this frame to prevent loop.");
+                return;
+            }
+
+            if (livePreview.readyState === livePreview.HAVE_ENOUGH_DATA && socket && socket.connected) {
+                isProcessingVision = true; // Lock Lagao
+                
+                if(scannerLine) scannerLine.style.display = 'block';
+
+                canvas.width = livePreview.videoWidth;
+                canvas.height = livePreview.videoHeight;
+                ctx.drawImage(livePreview, 0, 0, canvas.width, canvas.height);
+                const frame = canvas.toDataURL('image/jpeg', 0.7);
+                
+                socket.emit('gemy_cyber_scan', { image: frame, context: "STABILIZED_MONITORING" });
+                console.log("💎 High-Res Scan Sent. Lock Engaged.");
+            }
+        };
+
+        // --- ⚡ PERSISTENT HEARTBEAT (Bina Guard ke - Connection ke liye) ---
+        heartbeatInterval = setInterval(() => {
+            if (socket && socket.connected) {
+                socket.emit('heartbeat', { status: 'streaming', link: 'immortal' });
+            }
+        }, 4000);
+
+        // Timers shuru karo
+        setTimeout(sendDeepAnalysis, 2000); 
+        visionInterval = setInterval(sendDeepAnalysis, 50000); 
+
+        visionStream.getVideoTracks()[0].onended = () => stopCasting();
+
+    } catch (err) {
+        console.error("Vision Error:", err);
+        stopCasting();
+    }
+}
+
+// 🔓 Lock kholne ka logic (Ise socket listeners ke paas rakhein)
+socket.on('agent_speech', () => {
+    isProcessingVision = false; // Gemy ne response dena shuru kiya, ab lock khol do
+    console.log("🔓 Guard Released. Ready for next scan.");
+});
+
+
+
+function stopCasting() {
+    const btn = document.getElementById('cast-toggle');
+    const videoPanel = document.getElementById('video-panel');
+    const livePreview = document.getElementById('neural-mirror');
+    const scannerLine = document.getElementById('scanner-line');
+    const idleText = videoPanel.querySelector('div:not(.panel-header):not(.scan-bracket)');
+
+    // 1. Force Stop all Neural Intervals (Crucial Fix)
+    if (visionInterval) {
+        clearInterval(visionInterval);
+        visionInterval = null;
+    }
+    if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+        heartbeatInterval = null;
+    }
+
+    // 2. Clear Visual Scanning Pulse
+    if (scannerLine) {
+        scannerLine.style.display = 'none';
+    }
+
+    // 3. Socket Notification (Tell G-Nov we're out)
+    if (socket && socket.connected) {
+        socket.emit('screen_status_update', { status: false });
+    }
+
+    // 4. Terminate Physical Media Stream
+    if (visionStream) {
+        visionStream.getTracks().forEach(track => track.stop());
+        visionStream = null;
+    }
+
+    // 5. UI Restoration
+    btn.classList.remove('on');
+    if (livePreview) {
+        livePreview.style.display = 'none';
+        livePreview.srcObject = null;
+    }
+    if (idleText) {
+        idleText.style.display = 'flex'; // IDLE_STATE back online
+    }
+
+    addLog("[0][SYSTEM]: Neural Link Terminated. Privacy Shield On. 🛡️", 'system');
+}
+
+
+
+
+
+//////////////////////////// camera let visionActive = false; // Initial state
+// 🌐 GLOBAL VARIABLES (Ise Script ke ekdam upar rakho)
+
+
+
+
+
+
+</script>
+<script>
+
+
+
+
+
+////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>
+
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+//lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+//mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+//nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+
+
+let shouldSyncMemory = false; // 👈 Guard Flag
+
+// // 1. Jab bhi koi message add ho, flag true kar do
+// function addLog(message, sender) {
+//     // ... aapka existing addLog code ...
+//     if (sender === 'user' || sender === 'gemy') {
+//         shouldSyncMemory = true; // Activity detected!
+//     }
+// }
+
+// 2. Optimized Interval Logic
+setInterval(() => {
+    // 🛡️ Triple Check: Stream on ho, socket connected ho, AUR activity hui ho!
+    if (socket && socket.connected && visionStream && shouldSyncMemory) { 
+        
+        // G-Nov bol raha hai toh ruk jao (Collision avoid karne ke liye)
+        if (isGemyTalking || isProcessingVision) return;
+
+        const livePreview = document.getElementById('neural-mirror');
+        if (livePreview && livePreview.readyState === livePreview.HAVE_ENOUGH_DATA) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 300; // 👈 Memory ke liye high-res ki zaroorat nahi (Quota bachega)
+            canvas.height = 180; 
+            
+            canvas.getContext('2d').drawImage(livePreview, 0, 0, 300, 180);
+            const snapshot = canvas.toDataURL('image/jpeg', 0.3); // 👈 Low quality kafi hai memory ke liye
+
+            socket.emit('update_neural_memory', { image: snapshot });
+            
+            console.log("🧠 Smart Sync: Memory Archived. Standing by.");
+            shouldSyncMemory = false; // 👈 Reset Flag: Jab tak naya kaam na ho, dubara sync mat karo
+        }
+    }
+}, 120000); // 👈 2 Minute ka interval rakhein (Stability ke liye best hai)
+
+
+</script>
+
+<style>
+/* 🎯 Sniper Box - Fully Draggable & Resizable */
+#scanner-box {
+    position: fixed; /* Taaki terminal ke upar tairta rahe */
+    width: 250px; 
+    height: 180px;
+    min-width: 100px;
+    min-height: 80px;
+    border: 1px solid #00f2ff;
+    background: rgba(0, 242, 255, 0.05);
+    box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
+    z-index: 99999; /* Sabse upar rahega */
+    resize: both;  /* 👈 Isse corner se bada/chhota hoga */
+    overflow: hidden; 
+    cursor: move;
+    backdrop-filter: blur(3px);
+}
+
+/* 💠 Brackets Fix for Resizing */
+.corner-br {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    border: 2px solid #00f2ff;
+    pointer-events: none;
+}
+.top-l { top: 0; left: 0; border-right: 0; border-bottom: 0; }
+.bottom-r { bottom: 0; right: 0; border-left: 0; border-top: 0; cursor: nwse-resize; }
+
+
+
+    /* 🎯 Sniper Box with Targeting Brackets */
+#scanner-box {
+    border: 1px solid rgba(0, 242, 255, 0.5);
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 242, 255, 0.03) 0px,
+        rgba(0, 242, 255, 0.03) 1px,
+        transparent 1px,
+        transparent 2px
+    ); /* Scanline background */
+    box-shadow: 0 0 20px rgba(0, 242, 255, 0.2), inset 0 0 15px rgba(0, 242, 255, 0.1);
+    backdrop-filter: blur(2px);
+    overflow: hidden;
+}
+
+/* 💠 Corner Brackets */
+#scanner-box::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 20px; height: 20px;
+    border-top: 3px solid #00f2ff; border-left: 3px solid #00f2ff;
+}
+#scanner-box::after {
+    content: '';
+    position: absolute;
+    bottom: 0; right: 0; width: 20px; height: 20px;
+    border-bottom: 3px solid #00f2ff; border-right: 3px solid #00f2ff;
+}
+
+/* ⚡ Scanning HUD Line */
+.scan-bar {
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background: #00f2ff;
+    box-shadow: 0 0 10px #00f2ff;
+    animation: radar-beam 2s infinite linear;
+}
+
+@keyframes radar-beam {
+    0% { top: 0%; }
+    100% { top: 100%; }
+}
+
+
+
+
+/* 🚨 Red Alert Mode */
+.scanner-alert {
+    border-color: #ff004c !important;
+    box-shadow: 0 0 30px #ff004c, inset 0 0 20px rgba(255, 0, 76, 0.2) !important;
+    background: rgba(255, 0, 76, 0.1) !important;
+}
+
+.scanner-alert .scan-bar {
+    background: #ff004c !important;
+    box-shadow: 0 0 15px #ff004c !important;
+}
+
+
+
+
+
+
+
+
+
+
+
+    </style>
+
+<!-- 
+
+////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>
+
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+//lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+//mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+//nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+
+////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ --> 
+
+
+<div id="scanner-box" style="display: none; position: fixed; z-index: 1000000; width: 300px; height: 220px; border: 1px solid var(--cyan); background: rgba(0, 242, 255, 0.05); box-shadow: 0 0 20px rgba(0, 242, 255, 0.3); border-radius: 8px; overflow: hidden;">
+    
+    <div id="scanner-handle" style="position: absolute; top: 0; left: 0; width: 100%; height: 35px; background: rgba(0, 242, 255, 0.2); cursor: move; z-index: 10; display: flex; align-items: center; padding-left: 10px; border-bottom: 1px solid rgba(0, 242, 255, 0.3);">
+        <span style="font-size: 8px; color: var(--cyan); letter-spacing: 2px; font-family: monospace; font-weight: bold;">LENS_GRIP_STABLE</span>
+    </div>
+
+    <div class="corner-br top-l"></div>
+    <div class="corner-br bottom-r"></div>
+    <div class="scan-bar"></div>
+    
+    <video id="scanner-video" autoplay playsinline muted 
+           style="width: 100%; height: 100%; object-fit: cover; pointer-events: none; position: relative; z-index: 1; margin-top: 35px;">
+    </video>
+</div>
+
+<!----------==============================
+
+Canvas the largest invisibal hand system 
+
+ ===========================-->
+
+<!-- 
+////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>
+
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+//lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+//mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+//nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+
+////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  -->
+
+
+<canvas id="ghost-canvas" style="position: fixed; top: 0; left: 0; pointer-events: none; z-index: 100000;"></canvas>
+
+<script>
+function showGhostCode(correctText, x, y) {
+    const canvas = document.getElementById('ghost-canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Canvas size match screen
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Neon Blue Style
+    ctx.font = "16px monospace";
+    ctx.fillStyle = "rgba(0, 242, 255, 0.6)"; // Ghostly Neon Blue
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = "#00f2ff";
+
+    // Write the correction over the error
+    ctx.fillText(correctText, x, y);
+    
+    // 5 second baad gayab ho jaye (Ghost effect)
+    setTimeout(() => ctx.clearRect(0, 0, canvas.width, canvas.height), 5000);
+}
+
+////////////////////////////////
+////////////////////////////////////////
+///////////////////////////////
+///////////////////////////////////////
+//////////////////////////////
+// --- 🔊 SPEAKER CONTROL ---
+// let isMuted = false;
+
+function handleSpeaker() {
+    const btn = document.getElementById('speaker-toggle');
+    isMuted = !isMuted;
+    
+    if (isMuted) {
+        // 🤫 G-Nov ko chup kar do
+        window.speechSynthesis.cancel(); 
+        btn.innerHTML = "🔇";
+        btn.classList.remove('on'); // CSS glow hata do
+        addLog("[0] Audio suppressed. Stealth protocol active.", 'system');
+    } else {
+        // 🔊 Awaaz wapas lao
+        btn.innerHTML = "🔊";
+        btn.classList.add('on'); // Neon glow chalu
+        addLog("[0] Audio restored. Neural voice link active.", 'system');
+    }
+}
+///////////////////////////////////
+
+
+
+////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>
+
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+//lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+//mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+//nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+
+////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+// let isRecording = false;
+// let missionLogs = []; // Recording ka saara data yahan store hoga
+
+function handleRec() {
+    const btn = document.getElementById('rec-toggle');
+    
+    if (!isRecording) {
+        // 🔴 START RECORDING LOGIC
+        isRecording = true;
+        btn.classList.add('recording-now'); // Button blink karne lagega
+        btn.innerHTML = "⏹️"; // Icon change to Stop
+        btn.title = "Stop & Save Log";
+        
+        missionLogs = []; // Purana data clear
+        missionLogs.push(`--- GNov SENTINEL MISSION LOG: ${new Date().toLocaleString()} ---`);
+        
+        // Terminal mein signal
+        addLog("[0] 🔴 RECORDING SYSTEM TELEMETRY...", 'system');
+        addLog("[0]Mission Data Logging: ACTIVE", 'system');
+    } else {
+        // 💾 STOP & DOWNLOAD LOGIC
+        isRecording = false;
+        btn.classList.remove('recording-now');
+        btn.innerHTML = "⏺️";
+        btn.title = "Start Recording";
+        
+        addLog("[0] 💾 ENCRYPTING MISSION DATA...", 'system');
+        
+        // 🚀 Auto-Download Trigger
+        if (missionLogs.length > 1) {
+            const blob = new Blob([missionLogs.join('\n')], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `GNov_Mission_Report_${Date.now()}.log`;
+            document.body.appendChild(a);
+            a.click(); // Yeh line file download karwa degi!
+            document.body.removeChild(a);
+            
+            addLog("[0]REPORT DOWNLOADED: Mission_Log.log", 'system');
+        } else {
+            addLog("[0]No data captured to save.", 'system');
+        }
+    }
+}
+
+
+
+
+
+function handleRec() {
+    const btn = document.getElementById('rec-toggle');
+    
+    if (!isRecording) {
+        isRecording = true;
+        btn.classList.add('recording-now');
+        btn.innerHTML = "⏹️";
+        missionLogs = [`--- GNov MISSION LOG: ${new Date().toLocaleString()} ---` ];
+        addLog("[0] 🔴 MISSION ARCHIVING STARTED...", 'system');
+    } else {
+        isRecording = false;
+        btn.classList.remove('recording-now');
+        btn.innerHTML = "⏺️";
+        
+        // ✨ MAGIC: Show Popup instead of auto-download
+        document.getElementById('mission-popup').classList.add('active');
+    }
+}
+
+function confirmDownload() {
+    const blob = new Blob([missionLogs.join('\n')], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Mission_Report_${Date.now()}.log`;
+    a.click();
+    closeMissionPopup();
+    addLog("[0] MISSION REPORT EXPORTED.", 'system');
+}
+
+function closeMissionPopup() {
+    document.getElementById('mission-popup').classList.remove('active');
+}
+
+</script>
+<style>
+
+
+
+
+
+/* Recording Heartbeat Animation */
+.recording-now {
+    color: #ff4444 !important;
+    filter: drop-shadow(0 0 10px #ff0000);
+    animation: heartbeat 1.2s infinite ease-in-out;
+}
+
+@keyframes heartbeat {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.3); opacity: 0.6; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Speaker ON Glow */
+#speaker-toggle.on {
+    color: var(--cyan) !important;
+    filter: drop-shadow(0 0 8px var(--cyan));
+}
+
+
+
+
+#mission-popup {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    background: rgba(5, 15, 25, 0.95);
+    border: 2px solid var(--cyan);
+    box-shadow: 0 0 30px rgba(0, 242, 255, 0.4);
+    padding: 25px;
+    z-index: 100000;
+    border-radius: 10px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    opacity: 0; pointer-events: none;
+}
+
+#mission-popup.active {
+    opacity: 1; pointer-events: auto;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.popup-header {
+    color: var(--cyan);
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 3px;
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+
+.popup-btns { display: flex; gap: 15px; justify-content: center; margin-top: 20px; }
+
+.p-btn {
+    padding: 10px 20px;
+    border: 1px solid var(--cyan);
+    background: transparent;
+    color: var(--cyan);
+    cursor: pointer;
+    font-size: 11px;
+    letter-spacing: 1px;
+    transition: 0.3s;
+}
+
+.p-btn.download:hover { background: var(--cyan); color: black; box-shadow: 0 0 15px var(--cyan); }
+.p-btn.ignore:hover { border-color: #ff0000; color: #ff0101; box-shadow: 0 0 15px #ff006f; }
+
+.mission-popup-hidden { display: block; } /* Structural placeholder */
+
+
+
+
+#rec-tracker {
+    position: fixed;
+    top: 60px; right: 20px;
+    background: rgba(255, 0, 0, 0.15);
+    border: 1px solid #ff4444;
+    padding: 5px 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 100001;
+    backdrop-filter: blur(5px);
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    color: #ff4444;
+    cursor: move;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.2);
+    transition: opacity 0.3s;
+}
+
+.tracker-hidden { opacity: 0; pointer-events: none; }
+
+.tracker-drag-handle { color: rgba(255, 255, 255, 0.3); font-size: 12px; margin-right: 4px; }
+
+.rec-blink-dot {
+    color: #ff0000;
+    font-size: 18px;
+    animation: rec-flicker 1s infinite step-end;
+}
+
+@keyframes rec-flicker {
+    50% { opacity: 0; }
+}
+
+.tracker-label { font-size: 10px; letter-spacing: 1px; }
+
+#rec-timer { font-size: 12px; color: #fff; text-shadow: 0 0 5px #ff4444; }
+
+
+
+
+
+/* 
+////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>
+
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+//lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+//mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+//nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+
+////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ --> */
+
+</style>
+<div id="mission-popup" class="mission-popup-hidden">
+    <div class="popup-content">
+        <div class="popup-header">MISSION_LOG_COMPLETE</div>
+        <p>Neural telemetry archive is ready for export, Commander.</p>
+        <div class="popup-btns">
+            <button onclick="confirmDownload()" class="p-btn download">📥 DOWNLOAD</button>
+            <button onclick="closeMissionPopup()" class="p-btn ignore">✖ DISCARD</button>
+        </div>
+    </div>
+</div>
+
+
+<div id="rec-tracker" class="tracker-hidden">
+    <div class="tracker-drag-handle">::</div>
+    <span class="rec-blink-dot">●</span>
+    <span class="tracker-label">REC</span>
+    <span id="rec-timer">00:00</span>
+</div>
+<script>
+let recStartTime;
+let recTimerInterval;
+
+function handleRec() {
+    const btn = document.getElementById('rec-toggle');
+    const tracker = document.getElementById('rec-tracker');
+    
+    if (!isRecording) {
+        // 🔴 START MODE
+        isRecording = true;
+        tracker.classList.remove('tracker-hidden');
+        btn.classList.add('recording-on-glow');
+        
+        // Timer Logic
+        recStartTime = Date.now();
+        recTimerInterval = setInterval(updateRecTimer, 1000);
+        
+        missionLogs = [`--- GNov MISSION LOG: ${new Date().toLocaleString()} ---` ];
+        addLog("[0] 🔴 NEURAL_CAPTURE: ACTIVE", 'system');
+        
+        // Make it Draggable
+        dragElement(tracker);
+    } else {
+        // 💾 STOP MODE (Popup Trigger)
+        document.getElementById('mission-popup').classList.add('active');
+        stopRecVisuals();
+    }
+}
+
+function stopRecVisuals() {
+    const tracker = document.getElementById('rec-tracker');
+    tracker.classList.add('tracker-hidden');
+    clearInterval(recTimerInterval);
+    document.getElementById('rec-timer').innerText = "00:00";
+    document.getElementById('rec-toggle').classList.remove('recording-on-glow');
+}
+
+function updateRecTimer() {
+    const elapsed = Math.floor((Date.now() - recStartTime) / 1000);
+    const mins = Math.floor(elapsed / 60).toString().padStart(2, '0');
+    const secs = (elapsed % 60).toString().padStart(2, '0');
+    document.getElementById('rec-timer').innerText = `${mins}:${secs}`;
+}
+
+// Reuse your dragElement function for the tracker
+function dragElement(elmnt) {
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    const handle = elmnt.querySelector('.tracker-drag-handle');
+    
+    if (handle) {
+        handle.onmousedown = dragMouseDown;
+    } else {
+        elmnt.onmousedown = dragMouseDown;
+    }
+
+    function dragMouseDown(e) {
+        e.preventDefault();
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        document.onmousemove = elementDrag;
+    }
+
+    function elementDrag(e) {
+        e.preventDefault();
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+        elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+    }
+
+    function closeDragElement() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+    }
+}    
+
+
+
+
+
+
+
+////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>
+
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+//lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+//mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+//nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+
+////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+//////////////////////
+
+function confirmDownload() {
+    isRecording = false; 
+    
+    // ✨ Report Styling
+    let reportHeader = `
+=========================================
+      GNov SENTINEL - MISSION REPORT      
+      STAMP: ${new Date().toLocaleString()}
+=========================================
+STATUS: ARCHIVED
+OPERATOR: COMMANDER
+AGENT: GEMY_CORE_01
+-----------------------------------------
+`;
+
+    let fullLog = reportHeader + "\n" + missionLogs.join('\n\n') + "\n\n" + "--- END OF NEURAL DATA STREAM ---";
+
+    // 📄 Download Trigger
+    const blob = new Blob([fullLog], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `SENTINEL_MISSION_REPORT_${Date.now()}.log`;
+    document.body.appendChild(a);
+    a.click();
+    
+    closeMissionPopup();
+    addLog("[0] MISSION REPORT EXPORTED TO DISK.", 'system');
+}
+
+
+
+////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>
+
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+//lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+//mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+//nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+
+////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////
+////////////memoryyyyyy
+function saveToLocalHistory(message, sender) {
+    let history = JSON.parse(localStorage.getItem('gnov_chat_history')) || [];
+    history.push({ 
+        sender: sender, 
+        text: message, 
+        timestamp: new Date().toLocaleTimeString() 
+    });
+    // Sirf last 50 messages rakho taaki memory full na ho
+    if (history.length > 50) history.shift(); 
+    localStorage.setItem('gnov_chat_history', JSON.stringify(history));
+}
+
+window.onload = () => {
+    const savedHistory = JSON.parse(localStorage.getItem('gnov_chat_history'));
+    if (savedHistory) {
+        savedHistory.forEach(data => {
+            // Bina 'missionLogs' mein dubara add kiye sirf UI par dikhao
+            renderSavedMessage(data.text, data.sender, data.timestamp);
+        });
+        addLog("[0] 🛡️ NEURAL_LINK: History Restored from Local Cache.", 'system');
+    }
+};
+
+function renderSavedMessage(text, sender, time) {
+    const logContainer = document.getElementById('ai-logs');
+    const div = document.createElement('div');
+    div.className = `log-entry ${sender}-log`;
+    div.innerHTML = `<span class="timestamp">[${time}]</span> <span class="sender">${sender.toUpperCase()}:</span> ${text}`;
+    logContainer.appendChild(div);
+}
+
+
+function clearMissionHistory() {
+    localStorage.removeItem('gnov_chat_history');
+    location.reload(); // Fresh start
+}
+///////////////////////////////////
+
+
+////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>
+
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+//lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+//mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+//nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+
+////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+
+
+
+
+
+let currentSession = [];
+
+function startNewSession() {
+    // 1. Purani chat ko history sidebar mein push karo
+    if (currentSession.length > 0) {
+        saveToSidebar(currentSession);
+    }
+
+    // 2. Terminal UI clear karo
+    document.getElementById('terminal-display').innerHTML = `
+        <div class="system-log">[0] [NEURAL-RESET]: New session initialized...</div>
+    `;
+
+    // 3. Backend ko signal bhejo ki memory reset (ya partition) karni hai
+    socket.emit('new_session_trigger');
+    
+    // 4. Reset current local storage
+    currentSession = [];
+}
+////////////////////////////////////
+function loadSessionFromHistory(historyData) {
+    const terminal = document.getElementById('terminal-display');
+    terminal.innerHTML = ""; // Clear current
+
+    historyData.forEach(turn => {
+        appendMessage("Commander", turn.user);
+        appendMessage("G-Nov", turn.ai);
+    });
+
+    addSystemLog("[0] [SYNC]: Historical data restored to terminal.");
+}
+
+
+
+
+
+
+
+
+////++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>
+
+//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+//lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+//mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+//nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+
+////+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+/////////////////////////=0000000000000000000000000000000000000000000000000000
+
+// 1. Backend jab naya session confirm kare
+socket.on('new_session_created', function(data) {
+    const grid = document.getElementById('history-grid');
+    
+    // Naya Archive card bano
+    const archiveCard = document.createElement('div');
+    archiveCard.className = 'archive-card'; // Iska CSS niche hai
+    archiveCard.innerHTML = `
+        <div class="archive-id">${data.session_id}</div>
+        <div class="archive-status">DATA_STABLE</div>
+        <button onclick="requestPlayback('${data.session_id}')">REPLICATE</button>
+    `;
+    
+    grid.prepend(archiveCard); // Latest session upar dikhe
+});
+
+// 2. Playback request bhejo
+function requestPlayback(sessionId) {
+    socket.emit('load_session', { session_id: sessionId });
+    toggleHistoryOverlay(); // Popup band kar do replay shuru hone par
+}
+
+// 3. Backend se data wapas aane par terminal replicate karo
+socket.on('replicate_chat', function(data) {
+    const terminalBody = document.getElementById('terminal-body'); // Check your ID
+    terminalBody.innerHTML = ""; // Purani screen saaf
+    
+    data.history.forEach(turn => {
+        // Tumhara standard message appending function use karo
+        appendMessage("Commander", turn.user);
+        appendMessage("G-Nov", turn.ai);
+    });
+    
+    addSystemLog(`[0] [REPLICATION_COMPLETE]: Session ${data.session_id} restored.`);
+});
+///////000000000000000000000000000000000000000000000000000000000000000000000
+</script>
+<style>
+    #history-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 15px;
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.archive-card {
+    background: rgba(0, 242, 255, 0.05);
+    border: 1px solid var(--cyan);
+    padding: 10px;
+    border-radius: 4px;
+    text-align: center;
+    transition: 0.3s;
+}
+
+.archive-card:hover {
+    background: rgba(0, 242, 255, 0.15);
+    box-shadow: 0 0 15px var(--cyan);
+}
+
+.archive-id {
+    font-size: 10px;
+    color: var(--cyan);
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.archive-card button {
+    background: var(--cyan);
+    color: #000;
+    border: none;
+    padding: 4px 8px;
+    font-size: 9px;
+    cursor: pointer;
+    font-weight: bold;
+    border-radius: 2px;
+}
+    </style>
+
+<!-- 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$4
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+##########################################################################################
+***************************************************************************************** -->
+
+<script>
+
+socket.on('execute_magic', (data) => {
+    if (data.type === 'search') {
+        // ✨ Magic: Google search in new tab
+        window.open(`https://www.google.com/search?q=${encodeURIComponent(data.query)}`, '_blank');
+        addLog(`[0] 🛰️ MAGIC: Intelligence stream opened for: ${data.query}`, 'system');
+    } 
+    else if (data.type === 'note') {
+        // ✨ Magic: Auto-save to Notepad (using your existing function)
+        // Yahan tumhara confirmCreateNote ya similar function call hoga
+        addLog(`[0] 📝 MAGIC: Strategic data archived to Neural Notepad.`, 'system');
+        // Example: loadNote(createNewNote(data.content)); 
+    }
+});
+
+
+
+// <!--@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+//  -->
+// 1. Alert Sound Load Karo
+const threatAlarm = new Audio('https://www.soundjay.com/buttons/beep-01a.mp3'); 
+
+// 2. Risk Detection Listener
+socket.on('risk_detected', (data) => {
+    if (data.is_risk) {
+        // 🔊 Play Tactical Alarm
+        threatAlarm.play(); 
+        
+        // 🔴 Screen Border Flash (Visual Alert)
+        const terminal = document.getElementById('terminal-container'); // Apne container ki ID check kar lena
+        terminal.style.boxShadow = "0 0 30px #ff0000";
+        terminal.style.border = "2px solid #ff0000";
+        
+        setTimeout(() => {
+            terminal.style.boxShadow = "0 0 20px #00f3ff"; // Reset to Cyan
+            terminal.style.border = "1px solid #00f3ff";
+        }, 2000);
+
+        console.log("🚨 G-NOV ALERT: " + data.message);
+    }
+});
+
+
+
+</script>
+
+
+
+<style>
+/* Scanning Laser Line */
+.scan-pulse {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: rgba(0, 255, 255, 0.7);
+    box-shadow: 0 0 15px #00ffff, 0 0 30px #00ffff;
+    z-index: 100;
+    display: none; /* Default hidden */
+    animation: scanning 2s linear infinite;
+}
+
+@keyframes scanning {
+    0% { top: 0; }
+    50% { top: 100%; }
+    100% { top: 0; }
+}
+
+/* Scanning Overlay (Optional: Screen ko thoda bluish tint dega) */
+.scanning-active::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 255, 255, 0.05);
+    pointer-events: none;
+    z-index: 99;
+}
+</style>
+
+
+
+<!-- @########################################################################
+ @@@@@@@$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$4
+4444444444444444444444444444444444444444444444444444444444444444444444444444444444  -->
+
+
+<script>
+// --- 🛰️ GLOBAL NEURAL DATABASE ---
+const NEURAL_APP_MAP = {
+    "vscode": "https://vscode.dev", 
+    "github": "https://github.com",
+    "google": "https://www.google.com/search?igu=1",
+    "youtube": "https://www.youtube.com/embed", 
+    "photopea": "https://www.photopea.com",
+    "whiteboard": "https://excalidraw.com",
+    "docs": "https://docs.google.com/document/u/0/?authuser=0&usp=docs_home&ths=true",
+    "notes": "https://keep.google.com/", 
+    "calculator": "https://www.desmos.com/scientific",
+    "wikipedia": "https://en.m.wikipedia.org"
+};
+
+// --- 🖥️ G-NOV EMBEDDED WORKSPACE ---
+function launchInternalTab(url, name = "LINK") {
+    const workspace = document.getElementById('gnov-workspace');
+    if (!workspace) return;
+
+    workspace.style.display = 'block';
+    workspace.innerHTML = `
+        <div class="tab-control-bar">
+            <span>🛰️ NEURAL LINK: ${name.toUpperCase()}</span>
+            <button class="close-tab-btn" onclick="closeInternalTab()">TERMINATE LINK</button>
+        </div>
+        <iframe src="${url}" style="width:100%; height:calc(100% - 45px); border:none;" 
+                allow="autoplay; encrypted-media; camera; microphone"></iframe>
+    `;
+    
+    if (typeof addLog === 'function') addLog(`[0] MAGIC: Neural Workspace active for ${name}`, 'system');
+}
+
+function closeInternalTab() {
+    const workspace = document.getElementById('gnov-workspace');
+    if (workspace) {
+        workspace.style.display = 'none';
+        workspace.innerHTML = '';
+    }
+}
+
+// --- 📄 DATA INJECTION LOGIC ---
+function handleDataInjection(content, appName) {
+    const draftBox = document.getElementById('neural-draft-box');
+    const draftText = document.getElementById('draft-text');
+    
+    if (draftBox && draftText) {
+        draftText.innerText = content;
+        draftBox.classList.remove('hidden');
+        if (typeof addLog === 'function') addLog(`[0] MAGIC: Strategic content received for ${appName}.`, 'system');
+    }
+}
+
+function copyDraft() {
+    const text = document.getElementById('draft-text').innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.querySelector('#neural-draft-box button');
+        const originalText = btn.innerText;
+        btn.innerText = "COPIED ✅";
+        btn.style.background = "#00ff88";
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.style.background = "var(--cyan)";
+        }, 2000);
+    });
+ }
+
+
+// Global storage for the last triggered link
+let activeStrategicUrl = ""; 
+
+socket.on('execute_magic', function(data) {
+    console.log("⚡ [G-NOV EXECUTION]:", data);
+    
+    switch(data.type) {
+        case 'app_trigger':
+            const appKey = (data.app || "").toLowerCase();
+            const targetUrl = NEURAL_APP_MAP[appKey];
+
+            if (targetUrl) {
+                console.log(`🚀 Neural Link Established: ${appKey}`);
+                
+                // 1. Terminal ke andar Iframe load karo
+                launchInternalTab(targetUrl, appKey);
+
+                // 2. DYNAMIC OVERRIDE BUTTON ACTIVATE KAREIN
+                activeStrategicUrl = targetUrl;
+                const magicContainer = document.getElementById('magic-btn-container');
+                const magicBtn = document.getElementById('dynamic-magic-btn');
+
+                if (magicContainer && magicBtn) {
+                    // Button ka text aur style requirement ke hisaab se badlo
+                    magicBtn.innerText = `🛰️ DEPLOY EXTERNAL ${appKey.toUpperCase()} INTERFACE`;
+                    magicContainer.classList.remove('hidden'); // Button show karo
+                    
+                    // Visual feedback: Button ko glow karwao
+                    magicBtn.style.boxShadow = "0 0 20px #00f2ff";
+                }
+            } else {
+                console.warn(`⚠️ App '${appKey}' not in map.`);
+                window.open(`https://www.google.com/search?q=${data.app}`, '_blank');
+            }
+            break;
+
+        case 'data_injection':
+            handleDataInjection(data.content, data.app);
+            break;
+
+        case 'app_terminate':
+            closeInternalTab();
+            // Button ko bhi hide kar do terminal clear karte waqt
+            document.getElementById('magic-btn-container').classList.add('hidden');
+            break;
+
+        case 'camera_trigger':
+            if (data.status === 'on') { 
+                if (typeof startCamera === 'function') startCamera(); 
+            } else { 
+                if (typeof stopCamera === 'function') stopCamera(); 
+            }
+            break;
+
+        default:
+            console.warn("⚠️ Unknown Command:", data);
+    }
+});
+
+// Button click hone par ye function chalega
+function triggerStrategicLink() {
+    if (activeStrategicUrl) {
+        window.open(activeStrategicUrl, '_blank');
+        addLog(`[0] SYSTEM: External interface deployed for the active sector.`, 'system');
+        // Click ke baad cleanup
+        document.getElementById('magic-btn-container').classList.add('hidden');
+    }
+}
+
+
+
+
+
+
+
+
+</script>
+
+
+<style>
+#gnov-workspace {
+    display: none;
+    position: absolute;
+    top: 50px; /* Header ke niche */
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    background: rgba(10, 10, 10, 0.95);
+    border: 2px solid #00f2ff;
+    border-radius: 10px;
+    z-index: 9999;
+    box-shadow: 0 0 20px rgba(0, 242, 255, 0.5);
+    overflow: hidden;
+}
+
+.tab-control-bar {
+    background: #111;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #333;
+    color: #00f2ff;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.close-tab-btn {
+    background: #ff4444;
+    color: white;
+    border: none;
+    padding: 5px 15px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-weight: bold;
+}
+</style>
+<div id="neural-draft-box" class="hidden" style="position: fixed; top: 100px; right: 20px; width: 300px; background: rgba(0,0,0,0.9); border: 2px solid var(--cyan); z-index: 10000; padding: 15px; border-radius: 8px;">
+    <div style="color: var(--cyan); font-size: 10px; margin-bottom: 10px;">📄 G-NOV STRATEGIC DRAFT</div>
+    <div id="draft-text" style="color: #fff; font-size: 12px; max-height: 200px; overflow-y: auto; margin-bottom: 10px; font-family: monospace;"></div>
+    <button onclick="copyDraft()" style="width: 100%; background: var(--cyan); color: #000; border: none; padding: 8px; cursor: pointer; font-weight: bold;">COPY TO CLIPBOARD</button>
+</div>
+
+
+
+
+<div id="magic-btn-container" class="hidden" style="position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 10001;">
+    <button id="dynamic-magic-btn" onclick="triggerStrategicLink()" 
+        style="background: transparent; color: #00f2ff; border: 2px solid #00f2ff; padding: 12px 25px; 
+               font-family: 'Courier New', monospace; font-weight: bold; cursor: pointer; 
+               text-transform: uppercase; letter-spacing: 2px;
+               box-shadow: 0 0 15px rgba(0, 242, 255, 0.4); border-radius: 5px;
+               transition: 0.3s;">
+        🛰️ INITIALIZING LINK...
+    </button>
+</div>
+
+
+
+
+
+
+
+<script>
+
+
+// 📸 Camera Snapshot Logic (Guaranteed to work)
+function captureSpecificArea() {
+    const video = document.getElementById('scanner-video');
+    if (!video || video.readyState < 2) return null;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Fast analysis ke liye 0.4 quality
+    return canvas.toDataURL('image/jpeg', 0.4);
+}
+
+// 🎯 Trigger Analysis on Drop
+function triggerCyberScan() {
+    if (!visionActive) return;
+
+    const snapshot = captureSpecificArea(); 
+    if (snapshot && socket && socket.connected) {
+        console.log("📸 [LENS]: Snapshot captured. Dispatched to G-Nov.");
+        
+        // 📡 Backend ko signal bhejo
+        socket.emit('gemy_cyber_scan', { 
+            image: snapshot,
+            context: "Targeted Sniper Scan" 
+        });
+
+        // UI Feedback
+        const scanBar = document.querySelector('.scan-bar');
+        if(scanBar) {
+            scanBar.style.background = "#ff3366";
+            setTimeout(() => scanBar.style.background = "var(--cyan)", 800);
+        }
+        addLog("[0] [NEURAL]: Lens snapshot sent for intelligence analysis.", 'system');
+    }
+}
+
+
+
+
+
+
+
+socket.on('all_sessions_list', (data) => {
+    const grid = document.getElementById('history-grid');
+    if (!grid) {
+        console.error("🚨 History Grid not found in DOM!");
+        return;
+    }
+
+    grid.innerHTML = ""; // Clear existing cards
+    console.log("📂 Received Session Data:", data);
+
+    if (data.sessions && data.sessions.length > 0) {
+        data.sessions.forEach(s => {
+            renderSessionCard(s); // Cards generate honge
+        });
+    } else {
+        grid.innerHTML = '<div style="color:#555; font-size:12px; grid-column: 1/-1; text-align:center;">[0] NO ARCHIVES DETECTED IN SECTOR.</div>';
+    }
+});
+</script>
+
+
+
+
+
+
+
+</body>
+</html>  
