@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>G-Nov Kingdom Vault | Sovereign Edition</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        :root {
+            --neon-green: #00ff41;
+            --danger-red: #ff4444;
+            --gold: #ffd700;
+            --frozen-gray: #444;
+        }
+
+        body { background: #050505; color: white; font-family: 'Courier New', monospace; margin: 0; padding: 20px; }
+        
+        .vault-wrapper { max-width: 1000px; margin: auto; text-align: center; }
+        .vault-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin-top: 30px; }
+
+        .app-card {
+            background: #111; border: 1px solid #333; padding: 20px; border-radius: 15px;
+            cursor: pointer; position: relative; transition: 0.4s;
+        }
+
+        .app-card.unconfigured { border: 1px dashed var(--neon-green); opacity: 0.8; }
+        .app-card.sealed { border: 1px solid var(--danger-red); background: rgba(255,0,0,0.05); }
+        .app-card.accepted { border: 1px solid var(--gold); box-shadow: 0 0 15px var(--gold); transform: scale(1.05); }
+        .app-card.frozen { border: 2px solid var(--frozen-gray); opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
+
+        .app-icon { width: 50px; height: 50px; margin-bottom: 10px; }
+        .status-pill { font-size: 10px; padding: 2px 8px; border-radius: 10px; display: inline-block; margin-bottom: 10px; color: #000; font-weight: bold; }
+
+        .modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95);
+            display: none; align-items: center; justify-content: center; z-index: 100;
+        }
+        .modal.active { display: flex; }
+        
+        .chamber {
+            background: #000; border: 2px solid var(--neon-green); padding: 40px;
+            border-radius: 20px; width: 400px; position: relative; text-align: center;
+        }
+
+        .input-wrapper { position: relative; margin: 25px 0; }
+        .key-input {
+            width: 100%; padding: 12px; background: #111; border: 1px solid var(--neon-green);
+            color: white; font-size: 18px; text-align: center; box-sizing: border-box;
+        }
+        
+        .eye-toggle {
+            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+            cursor: pointer; font-size: 20px;
+        }
+
+        .btn { padding: 10px 20px; border: none; cursor: pointer; font-weight: bold; margin: 5px; border-radius: 5px; }
+        .btn-seal { background: var(--neon-green); color: black; }
+        .btn-unseal { background: var(--danger-red); color: white; }
+        .btn-close { background: #333; color: white; }
+   
+   /* 🛡️ Option 1: Neon Scanning Beam styling */
+        .scanning-beam {
+            width: 150px; /* Beam ki width */
+            height: 2px; /* Patli laser line */
+            background: var(--neon-green);
+            margin: 10px auto; /* Title ke neeche gap */
+            box-shadow: 0 0 10px var(--neon-green);
+            animation: scanning 1.5s ease-in-out infinite;
+        }
+
+        /* 🎬 Animation logic */
+        @keyframes scanning {
+            0%, 100% { transform: scaleX(1); opacity: 1; }
+            50% { transform: scaleX(1.5); opacity: 0.5; }
+        }</style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<div class="vault-wrapper">
+   <h1>COMMANDER'S SENSITIVE APPS</h1>
+
+   <h1 style="font: size 2px center; color:rgb(0, 206, 225); font-family:'Courier New', monospace; letter-spacing:3px; background: rgba(0, 4, 12, 0.8); padding: 20px; border: 1px solid var(--neon-green); box-shadow: inset 0 0 20px rgba(0, 255, 65, 0.2);">
+    CORE-SYSTEM: SOVEREIGN DIGITAL FORTRESS
+</h1>
+
+
+
+
+
+    <div class="scanning-beam"></div>
+    <div class="vault-grid" id="vaultGrid"></div>
+</div>
+
+<div class="modal" id="vaultModal">
+    <div class="chamber" id="modalChamber"></div>
+</div>
+
+
+</style>
+<script>
+    // const apps = [
+    //     { id: 'gmail', name: 'Gmail', icon: 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg', url: 'https://mail.google.com' },
+    //     { id: 'drive', name: 'Drive', icon: 'https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg', url: 'https://drive.google.com' },
+    //     { id: 'calendar', name: 'Calendar', icon: 'https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg', url: 'https://calendar.google.com' },
+    //     { id: 'analytics', name: 'Analytics', icon: 'https://upload.wikimedia.org/wikipedia/commons/a/a7/Google_Analytics_Logo.svg', url: 'https://analytics.google.com' },
+    //     { id: 'photos', name: 'Photos', icon: 'https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Photos_icon_%282020%29.svg', url: 'https://photos.google.com' },
+    //     { id: 'cloud', name: 'G-Cloud', icon: 'https://upload.wikimedia.org/wikipedia/commons/5/51/Google_Cloud_Platform_logo.svg', url: 'https://console.cloud.google.com' }
+    // ];
+
+    const apps = [
+        { id: 'gmail', name: 'Gmail', icon: 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg', url: 'https://mail.google.com' },
+        { id: 'drive', name: 'Drive', icon: 'https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg', url: 'https://drive.google.com' },
+        { id: 'calendar', name: 'Calendar', icon: 'https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg', url: 'https://calendar.google.com' },
+        { id: 'analytics', name: 'Analytics', icon: 'https://cdn.worldvectorlogo.com/logos/google-analytics-4.svg', url: 'https://analytics.google.com' },
+        { id: 'photos', name: 'Photos', icon: 'https://preview.redd.it/redesign-of-google-photos-icon-v0-fko99lktrezf1.jpg?width=640&crop=smart&auto=webp&s=253783f2d8b4a067a348eb8d23fe0b70dc3ad278', url: 'https://photos.google.com' },
+        { id: 'scholar', name: 'Scholar', icon: 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Google_Scholar_logo.svg', url: 'https://scholar.google.com' },
+        { id: 'cloud', name: 'G-Cloud', icon: 'https://i.pinimg.com/1200x/82/3b/bd/823bbda0a0841434cc20752804e34127.jpg', url: 'https://console.cloud.google.com' },
+        { id: 'ads', name: 'G-Ads', icon: 'https://upload.wikimedia.org/wikipedia/commons/a/aa/Google_Maps_icon_%282020%29.svg', url: 'https://ads.google.com' }
+    ];
+
+
+    // 1. Initial Data Load
+    let registry = JSON.parse(localStorage.getItem('gnov_sensitive_vault')) || {};
+
+    // 2. Main Render Function (Grid Setup)
+    function renderApps() {
+        const grid = document.getElementById('vaultGrid');
+        if(!grid) return; 
+        grid.innerHTML = '';
+        
+        apps.forEach(app => {
+            const data = registry[app.id] || {};
+            let state = 'unconfigured';
+            let pillColor = 'var(--neon-green)';
+
+            if (data.frozen) {
+                state = 'frozen';
+                pillColor = 'var(--frozen-gray)';
+            } else if (data.unlocked) {
+                state = 'accepted';
+                pillColor = 'var(--gold)';
+            } else if (data.key) {
+                state = 'sealed';
+                pillColor = 'var(--danger-red)';
+            }
+            
+            grid.innerHTML += `
+                <div class="app-card ${state}" onclick="openChamber('${app.id}')">
+                    <span class="status-pill" style="background:${pillColor}">${state.toUpperCase()}</span>
+                    <br>
+                    <img src="${app.icon}" class="app-icon">
+                    <div>${app.name}</div>
+                </div>
+            `;
+        });
+    }
+
+
+function openChamber(id) {
+    const app = apps.find(a => a.id === id);
+    const modal = document.getElementById('vaultModal');
+    const chamber = document.getElementById('modalChamber');
+    const data = registry[id] || {};
+
+    modal.classList.add('active');
+
+    // 1. Check if Ticket is Pending
+    if (data.ticketPending) {
+        showTicketView(id); 
+        return; 
+    }
+
+    // 2. Check if Frozen (3 Strikes)
+    if (data.frozen) {
+        chamber.innerHTML = `
+            <h2 style="color:var(--danger-red)">🚨 SYSTEM FROZEN</h2>
+            <p>Security protocol breached for ${app.name}.</p>
+            <div class="input-wrapper">
+                <input type="password" id="recoveryField" class="key-input" placeholder="Enter Master Recovery Code">
+            </div>
+            <div style="display:flex; flex-direction:column; gap:10px; align-items:center;">
+                <button class="btn btn-seal" style="width:80%" onclick="triggerReflip('${id}')">VERIFY & UNFREEZE</button>
+                <button class="btn" style="width:80%; background:var(--gold); color:black;" onclick="openReflipForm('${id}')">📋 OPEN REFLIP FORM</button>
+                <button class="btn btn-close" onclick="closeModal()">CLOSE</button>
+            </div>
+        `;
+    } 
+    // 3. Check if De-activated (After Disconnect) 🛸
+    else if (data.deactivated) {
+        chamber.innerHTML = `
+            <h2 style="color:#bb86fc">🛸 VAULT DE-ACTIVATED</h2>
+            <p style="font-size:12px;">This vault's handshake has been terminated. Please provide the Community Verification Hash to reconnect.</p>
+            <div style="margin-top:20px;">
+                <input type="password" id="reconnectHash" class="key-input" placeholder="Enter Community Hash (GNOV...)">
+                <button class="btn btn-unseal" style="width:100%; margin-top:10px; background:#bb86fc;" onclick="processReconnect('${id}')">
+                    RE-ESTABLISH CONNECTION
+                </button>
+                <button class="btn btn-close" style="width:100%" onclick="closeModal()">CANCEL</button>
+            </div>
+        `;
+    }
+    // 4. Check if Unconfigured (First Time) 🟢
+    else if (!data.key) {
+        chamber.innerHTML = `
+            <h2 style="color:var(--neon-green)">INITIALIZE VAULT</h2>
+            <p>First-time setup for ${app.name}</p>
+            <div class="input-wrapper">
+                <input type="password" id="keyField" class="key-input" placeholder="Create Sovereign Key">
+                <input type="password" id="recoveryField" class="key-input" placeholder="Set Master Recovery Code" style="border-color:var(--gold); margin-top:10px;">
+            </div>
+            <p style="font-size:10px; color:var(--gold)">*Security: SHA-256 Encryption Active</p>
+            <button class="btn btn-seal" onclick="saveKey('${id}')">SEAL VAULT</button>
+            <button class="btn btn-close" onclick="closeModal()">CANCEL</button>
+        `;
+    } 
+    // 5. Check if Unlocked/Accepted (Bypass Mode) 🟡
+    else if (data.unlocked) { 
+        chamber.innerHTML = `
+            <h2 style="color:var(--gold)">👑 SOVEREIGN ACCESS RESTORED</h2>
+            <p style="font-size:12px; color:var(--frozen-gray);">The handshake is active. Re-verify your original key to enter.</p>
+            <div style="margin-top:20px;">
+                <input type="password" id="keyField" class="key-input" placeholder="Enter Original Sovereign Key">
+                <button class="btn btn-unseal" style="width:100%; margin-top:10px;" onclick="unseal('${id}')">VERIFY & ACCESS</button>
+                <hr style="border:0; border-top:1px solid #333; margin:20px 0;">
+                <button class="btn btn-close" style="width:100%; border-color:var(--danger-red); color:var(--danger-red)" onclick="disconnectApp('${id}')">DISCONNECT & PURGE</button>
+            </div>
+        `;
+    }
+    // 6. Default: Locked (Normal State) 🔴
+    else {
+        chamber.innerHTML = `
+            <h2 style="color:var(--danger-red)">VAULT LOCKED</h2>
+            <p>Identify yourself for ${app.name}</p>
+            <div class="input-wrapper">
+                <input type="password" id="keyField" class="key-input" placeholder="Enter security key">
+                <span class="eye-toggle" onclick="toggleKey()">👁️</span>
+            </div>
+            <button class="btn btn-unseal" onclick="unseal('${id}')">UNSEAL & ACCEPT</button>
+            <button class="btn btn-close" onclick="closeModal()">CANCEL</button>
+        `;
+    }
+}
+
+
+
+
+
+    // 🔐 SUPER SECURE SAVE: Hashing the key (One-Way)
+function saveKey(id) {
+    const keyVal = document.getElementById('keyField').value;
+    const recoveryVal = document.getElementById('recoveryField').value;
+    
+    if(!keyVal || !recoveryVal) return alert("All codes required!");
+
+    // SHA-256 Hashing: Isse reverse karna IMPOSSIBLE hai
+    const hashedKey = CryptoJS.SHA256(keyVal).toString();
+    const hashedRecovery = CryptoJS.SHA256(recoveryVal).toString();
+
+    registry[id] = { 
+        key: hashedKey, 
+        recoveryCode: hashedRecovery, 
+        unlocked: false, 
+        attempts: 0, 
+        frozen: false 
+    };
+    sync();
+}
+
+
+
+function unseal(id) {
+    const val = document.getElementById('keyField').value.trim();
+    const data = registry[id];
+    
+    // User input ko hash karo (Hacker-proof)
+    const inputHash = CryptoJS.SHA256(val).toString();
+
+    if (inputHash === data.key) {
+        data.unlocked = true;
+        data.attempts = 0; // Reset attempts on success
+        sync();
+        window.open(apps.find(a => a.id === id).url, '_blank');
+    } else {
+        // 🚨 3-Attempts Logic
+        data.attempts = (data.attempts || 0) + 1;
+        const remaining = 3 - data.attempts;
+        
+        if (remaining <= 0) {
+            data.frozen = true;
+            alert("🚨 CRITICAL: 3 Failed Attempts. Vault is now FROZEN.");
+        } else {
+            alert(`🚫 MISMATCH. Warning: ${remaining} attempts remaining.`);
+        }
+        sync();
+    }
+}
+   
+
+    function triggerReflip(id) {
+        const inputCode = document.getElementById('recoveryField').value;
+        
+        if (inputCode === registry[id].recoveryCode) {
+            alert("VERIFICATION SUCCESSFUL. Raja, the vault has been reset.");
+            delete registry[id]; // Resets to 'Unconfigured'
+            sync();
+        } else {
+            alert("CRITICAL ERROR: Recovery Code Mismatch. System remains Frozen.");
+        }
+    }
+
+    // 5. Utility Functions
+    function sync() {
+        localStorage.setItem('gnov_sensitive_vault', JSON.stringify(registry));
+        renderApps();
+        closeModal();
+    }
+
+    function closeModal() {
+        document.getElementById('vaultModal').classList.remove('active');
+    }
+
+    function toggleKey() {
+        const x = document.getElementById("keyField");
+        x.type = (x.type === "password") ? "text" : "password";
+    }
+
+    window.onload = renderApps;
+
+
+
+    // Console mein "Raja" type karte hi poora data samne aa jayega
+window.Raja = function() {
+    console.log("🛡️ G-Nov Kingdom Registry:");
+    console.table(JSON.parse(localStorage.getItem('gnov_sensitive_vault')));
+};
+
+
+///////////////////////////////////// form 
+// 📋 1. Reflip Form with Full Details
+function openReflipForm(id) {
+    const app = apps.find(a => a.id === id);
+    const chamber = document.getElementById('modalChamber');
+    
+    chamber.innerHTML = `
+        <div class="reflip-form-container">
+            <h2 style="color:var(--gold); text-align:center; margin-bottom:5px;">📋 REFLIP PETITION</h2>
+            <p style="font-size:11px; text-align:center; color:var(--frozen-gray); margin-bottom:15px;">Official Reset Request for ${app.name}</p>
+            
+            <div class="form-group">
+                <label>COMMANDER FULL NAME</label>
+                <input type="text" id="pName" class="form-input" placeholder="e.g. Raja Kumar">
+            </div>
+            <div class="form-group">
+                <label>REGISTERED EMAIL</label>
+                <input type="email" id="pEmail" class="form-input" placeholder="commander@gmail.com">
+            </div>
+            <div class="form-group">
+                <label>CONTACT NUMBER</label>
+                <input type="tel" id="pPhone" class="form-input" placeholder="+91 XXXXX XXXXX">
+            </div>
+            <div class="form-group">
+                <label>INCIDENT REPORT (REASON)</label>
+                <textarea id="pReason" class="form-input" rows="2" placeholder="Why was the vault frozen?"></textarea>
+            </div>
+            
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button class="btn" style="background:var(--gold); color:black; flex:1; font-weight:bold;" onclick="submitPetition('${app.name}', '${id}')">SUBMIT PETITION</button>
+                <button class="btn btn-close" style="flex:1;" onclick="closeModal()">ABORT</button>
+            </div>
+        </div>
+    `;
+}
+
+
+async function submitPetition(appName, id) {
+
+
+    registry[id].ticketPending = true; 
+    sync(); // Ye local storage mein save kar dega
+
+    showTicketView(id);
+
+    const name = document.getElementById('pName').value;
+    const uEmail = document.getElementById('pEmail').value;
+    const phone = document.getElementById('pPhone').value;
+    const reason = document.getElementById('pReason').value;
+
+    if(!name || !uEmail || !phone || !reason) {
+        return alert("Commander, all fields are mandatory for identity verification!");
+    }
+
+    // 🚀 Background Email Dispatch (Using Formspree for Silent Send)
+    const formData = new FormData();
+    formData.append('Commander_Name', name);
+    formData.append('App_Target', appName);
+    formData.append('User_Email', uEmail);
+    formData.append('Phone', phone);
+    formData.append('Reason', reason);
+
+    // 🎫 Step 2: Show "Ticket Raised" View (Immediate Feedback)
+    const chamber = document.getElementById('modalChamber');
+    chamber.innerHTML = `
+        <div style="text-align:center; padding:20px;">
+            <div class="pulse-circle" style="margin: 0 auto 15px;"></div>
+            <h2 style="color:var(--gold); margin-bottom:10px;">TICKET RAISED!</h2>
+            <p style="font-size:14px; color:#fff;">Support ID: <b>GNOV-${Math.floor(1000 + Math.random() * 9000)}</b></p>
+            <hr style="border:0; border-top:1px solid #333; margin:15px 0;">
+            <p style="font-size:12px; color:var(--frozen-gray); line-height:1.5;">
+                Community has been notified. We are verifying your identity.<br>
+                <span style="color:var(--gold)">Keep an eye on your <b>Email Inbox</b> for the Access Code. <br>
+                <b>CAUTION:</b> The Admin Code is valid for 3 attempts only. Do not guess!</span>
+            </p>
+            <div class="input-wrapper" style="margin-top:20px;">
+                <input type="text" id="adminAccessCode" class="key-input" placeholder="Paste Access Code Here">
+            </div>
+            <button class="btn btn-seal" style="width:100%; margin-top:10px;" onclick="verifyAdminCode('${id}')">VALIDATE & REFLIP</button>
+            <button class="btn btn-close" style="margin-top:10px; opacity:0.6;" onclick="closeModal()">RETURN TO KINGDOM</button>
+        </div>
+    `;
+
+    // 🌐 Actual background sending
+    try {
+        await fetch("https://formspree.io/f/meerkdrb", { // 👈 Apni ID yahan dalo
+            method: "POST",
+            body: formData,
+            headers: { 'Accept': 'application/json' }
+        });
+        console.log("Dispatch Successful to jeevanshripal6@gmail.com");
+    } catch (e) {
+        console.error("Mail Dispatch Failed, but Ticket UI is active.");
+    }
+}
+
+
+
+
+/////////////////////////////////////////////////////////
+////////////////////////////////////////////
+let adminAttempts = 0; // Tracking access code attempts
+
+function verifyAdminCode(id) {
+    const enteredCode = document.getElementById('adminAccessCode').value;
+    const correctCode = "GNOV2026"; // Code jo hum email karenge
+
+    if (enteredCode === correctCode) {
+        alert("🚨 ACCESS GRANTED BY COMMUNITY! Vault is now Unfrozen.");
+        delete registry[id]; // Reset the app
+        adminAttempts = 0;
+        sync();
+    } else {
+        adminAttempts++;
+        const left = 3 - adminAttempts;
+        if (left <= 0) {
+            alert("🚨 CRITICAL BREACH: Admin Code Failed 3 Times. System Lockdown.");
+            closeModal();
+        } else {
+            alert(`🚫 INVALID ACCESS CODE. Warning: ${left} attempts remaining.`);
+        }
+    }
+}
+
+
+
+
+
+///////////////////
+
+
+function showTicketView(id) {
+    const chamber = document.getElementById('modalChamber');
+    chamber.innerHTML = `
+        <div style="text-align:center; padding:20px;">
+            <h2 style="color:var(--gold); margin-bottom:10px;">🛡️ DUAL-SEAL VERIFICATION</h2>
+            <p style="font-size:10px; color:var(--frozen-gray); margin-bottom:15px;">MFA Protocol: Fingerprint + Community Key Required</p>
+            
+            <div id="scannerContainer" class="fp-scanner" onmousedown="startFingerprintScan('${id}')" onmouseup="stopFingerprintScan()">
+                <div class="fp-icon">🔒</div>
+                <div id="scanBar" class="fp-bar"></div>
+            </div>
+
+            <p id="fpStatus" style="margin-top:15px; font-size:12px; color:var(--gold);">PHASE 1: WAITING FOR BIOMETRICS...</p>
+            
+            <div id="adminKeyArea" style="display:none; margin-top:20px; border-top: 1px solid #333; padding-top:15px;">
+                <p style="font-size:11px; color:var(--neon-green);">BIOMETRICS PASSED ✅ ENTER COMMUNITY KEY:</p>
+                <div class="input-wrapper">
+                    <input type="password" id="adminAccessCode" class="key-input" placeholder="Enter Hashed Admin Key">
+                </div>
+                <button class="btn btn-seal" style="width:100%; margin-top:10px;" onclick="verifyDualSeal('${id}')">FINAL UNFREEZE</button>
+            </div>
+
+            <button class="btn btn-close" style="margin-top:20px; opacity:0.5;" onclick="closeModal()">ABORT</button>
+        </div>
+    `;
+}
+//////////////////////////////////////////////////////////
+
+
+
+function startFingerprintScan(id) {
+    const bar = document.getElementById('scanBar');
+    const status = document.getElementById('fpStatus');
+    const adminArea = document.getElementById('adminKeyArea');
+    
+    status.innerText = "SCANNING BIOMETRICS...";
+    bar.style.height = "100%";
+
+    scanTimer = setTimeout(() => {
+        status.innerText = "BIOMETRIC MATCH FOUND ✅";
+        status.style.color = "var(--neon-green)";
+        adminArea.style.display = "block"; // Unlock Step 2
+    }, 2500); 
+}
+
+
+////////////////////////////////////////////////////
+function verifyDualSeal(id) {
+    const enteredCode = document.getElementById('adminAccessCode').value.trim();
+    const secureHash = "7ee92e799a2282d948a5b2a03917df7ea7233aafc413fd64d0edfa5847499ea3"; // GNOV2026 hash
+
+    try {
+        const inputHash = CryptoJS.SHA256(enteredCode.toUpperCase()).toString();
+
+        if (inputHash === secureHash) {
+            
+            // 🛡️ Condition 2: Check if this "Emergency Key" was already used
+            if (registry[id] && registry[id].tokenUsed) {
+                alert("🚫 SECURITY BREACH: This Admin Key has already been used once. It is now VOID. Contact Community for a new one.");
+                closeModal();
+                return;
+            }
+
+            alert("🚨 ONE-TIME ACCESS GRANTED! Status: ACCEPTED ✅");
+
+            // 🛡️ Condition 1: Direct Accepted State
+            if (registry[id]) {
+                registry[id].frozen = false;
+                registry[id].unlocked = true; 
+                registry[id].attempts = 0;
+                registry[id].ticketPending = false;
+                
+                // Mark this app's token as USED forever
+                registry[id].tokenUsed = true; 
+            }
+
+            localStorage.setItem('gnov_sensitive_vault', JSON.stringify(registry));
+            renderApps();
+            closeModal();
+
+            // Redirect to App
+            const app = apps.find(a => a.id === id);
+            if(app) window.open(app.url, '_blank');
+
+        } else {
+            alert("🚫 INVALID KEY. Verification Failed.");
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+
+
+
+
+function disconnectApp(id) {
+    if(confirm("🚨 TERMINATE SESSION? Vault will enter De-activated mode.")) {
+        if (registry[id]) {
+            // 1. Flag set karo
+            registry[id].deactivated = true; 
+            registry[id].unlocked = false; 
+            
+            // 2. Save karo
+            localStorage.setItem('gnov_sensitive_vault', JSON.stringify(registry));
+            
+            // 3. 🚨 YE ZAROORI HAI: Dashboard ko refresh karo
+            renderApps(); 
+            closeModal();
+        }
+    }
+}
+
+
+
+
+
+
+
+
+// Is logic ko renderApps ke loop ke andar dalo (Jahan status decide hota hai)
+function renderApps() {
+    const grid = document.getElementById('vaultGrid');
+    if(!grid) return; 
+    grid.innerHTML = '';
+    
+    apps.forEach(app => {
+        const data = registry[app.id] || {};
+        let state = 'unconfigured';
+        let pillColor = 'var(--neon-green)';
+
+        // ⭐ STATUS HIERARCHY (Sequence Matters!)
+        if (!data.key) {
+            state = 'unconfigured';
+            pillColor = 'var(--neon-green)';
+        } 
+        // 1. Sabse pehle Deactivated check karo
+        else if (data.deactivated) {
+            state = 'deactivated';
+            pillColor = '#bb86fc';
+           
+        }
+        else if (data.frozen) {
+            state = 'frozen';
+            pillColor = 'var(--frozen-gray)';
+        } 
+        else if (data.unlocked) {
+            state = 'accepted';
+            pillColor = 'var(--gold)';
+        } 
+        else if (data.key) {
+            state = 'sealed';
+            pillColor = 'var(--danger-red)';
+        }
+        
+        grid.innerHTML += `
+            <div class="app-card ${state}" onclick="openChamber('${app.id}')">
+                <span class="status-pill" style="background:${pillColor}">${state.toUpperCase()}</span>
+                <br>
+                <img src="${app.icon}" class="app-icon">
+                <div>${app.name}</div>
+            </div>
+        `;
+    });
+}
+
+
+
+///////////////////////////
+
+
+function processReconnect(id) {
+    const code = document.getElementById('reconnectHash').value.trim();
+    const secureHash = "$2y$10$LDv7Ujiu6/cPspag0T1aWuI/dn2QYAubA3RBZbp3j7mjGU.0RxzQq"; // GNOV2026
+
+    const inputHash = CryptoJS.SHA256(code.toUpperCase()).toString();
+
+    if (inputHash === secureHash) {
+        alert("✅ HASH VERIFIED: System Purging... Vault is now ready for RE-INITIALIZATION.");
+
+        // 🚨 YAHAN HAI JADOO: Data uda do taaki card Gray (Unconfigured) ho jaye
+        delete registry[id]; 
+        
+        localStorage.setItem('gnov_sensitive_vault', JSON.stringify(registry));
+        
+        // 🔄 Dashboard refresh karo taaki card Gray dikhe
+        renderApps();
+        
+        // 🔓 Modal mein turant "Initialize" wala interface dikhao
+        openChamber(id); 
+        
+    } else {
+        alert("🚫 INVALID HASH: Security Protocol Denied Re-connection.");
+    }
+}
+
+
+
+
+
+
+</script>
+
+
+<style>
+
+canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    opacity: 5; /* Visibility badha di 0.1 se 0.3 */
+    pointer-events: none; /* Taaki click karne mein problem na ho */
+}
+
+
+
+
+
+
+/* 📋 Reflip Form Styling */
+.reflip-form-container {
+    background: #000;
+    border: 2px solid var(--gold);
+    padding: 30px;
+    border-radius: 15px;
+    text-align: left;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+}
+
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; font-size: 12px; color: var(--gold); margin-bottom: 5px; }
+.form-input { 
+    width: 100%; padding: 10px; background: #111; 
+    border: 1px solid #444; color: #fff; border-radius: 5px; 
+}
+.form-input:focus { border-color: var(--gold); outline: none; }
+
+
+
+
+
+.fp-scanner {
+    width: 100px; height: 130px;
+    border: 2px solid var(--gold);
+    border-radius: 15px;
+    margin: 0 auto;
+    position: relative;
+    cursor: pointer;
+    background: rgba(255, 215, 0, 0.05);
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+}
+
+.fp-icon { font-size: 40px; z-index: 2; filter: drop-shadow(0 0 5px var(--gold)); }
+
+.fp-bar {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100%; height: 0%;
+    background: rgba(0, 255, 157, 0.3); /* Neon Green scan effect */
+    transition: height 2.5s linear;
+    z-index: 1;
+}
+
+.fp-scanner:active {
+    box-shadow: 0 0 20px var(--neon-green);
+    border-color: var(--neon-green);
+}
+
+
+
+
+
+
+
+
+
+
+
+/* Deactivated card ka naya Halka Red look */
+.app-card.deactivated {
+    border-color: #ff6666 !important; /* Halka Red border */
+    background: rgba(103, 3, 56, 0.586); /* Very light red background */
+    box-shadow: 0 0 15px rgba(191, 132, 255, 0.963);
+    opacity: 0.9;
+}
+
+/* Status Pill ka color bhi red theme mein */
+.status-pill.deactivated {
+    background: #cc0000 !important; /* Deep Red for the pill */
+    color: white !important;
+    border: 1px solid #ff6666;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+</style>
+</body>
+
+
+
+</html>
+
+
+
+
+
+<script>
+
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d');
+document.body.appendChild(canvas);
+
+// Screen sizing
+let width = canvas.width = window.innerWidth;
+let height = canvas.height = window.innerHeight;
+
+// Numbers settings
+let fontSize = 16;
+let columns = Math.floor(width / fontSize);
+let drops = new Array(columns).fill(1);
+
+function draw() {
+    // Ye background ko halka kala rakhta hai taaki "Tail" (ponchh) dikhe
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; 
+    ctx.fillRect(0, 0, width, height);
+
+    // Bright Neon Green color
+    ctx.fillStyle = '#00ff9d'; 
+    ctx.font = fontSize + 'px monospace';
+    ctx.shadowBlur = 8; // Numbers mein glow aayega
+    ctx.shadowColor = '#00ff9d';
+
+    for (let i = 0; i < drops.length; i++) {
+        // Random 0 or 1
+        const text = Math.floor(Math.random() * 2);
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+        // Reset drop to top randomly
+        if (drops[i] * fontSize > height && Math.random() > 0.975) {
+            drops[i] = 0;
+        }
+        drops[i]++;
+    }
+}
+
+// Window resize handle
+window.addEventListener('resize', () => {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+    columns = Math.floor(width / fontSize);
+    drops = new Array(columns).fill(1);
+});
+
+setInterval(draw, 50);
+</script>

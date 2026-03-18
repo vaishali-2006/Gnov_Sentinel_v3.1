@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>G-Nov | Tactical Manual</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cyan: #00f2ff;
+            --deep-bg: #05080a;
+            --glass: rgba(0, 242, 255, 0.05);
+            --border: rgba(0, 242, 255, 0.3);
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--deep-bg);
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(0, 242, 255, 0.05) 0%, transparent 80%),
+                linear-gradient(rgba(0, 242, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 242, 255, 0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 30px 30px, 30px 30px;
+            color: #adbac7;
+            font-family: 'Rajdhani', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        /* --- Header & Back Button --- */
+        .top-nav {
+            width: 100%;
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        .back-home {
+            text-decoration: none;
+            color: var(--cyan);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            border: 1px solid var(--cyan);
+            padding: 8px 20px;
+            border-radius: 5px;
+            transition: 0.3s;
+            background: rgba(0, 242, 255, 0.1);
+            box-shadow: 0 0 10px rgba(0, 242, 255, 0.2);
+        }
+
+        .back-home:hover {
+            background: var(--cyan);
+            color: #000;
+            box-shadow: 0 0 20px var(--cyan);
+        }
+
+        /* --- Main Manual Content --- */
+        .container {
+            max-width: 900px;
+            width: 90%;
+            margin-top: 20px;
+            padding-bottom: 50px;
+        }
+
+        .hero-title {
+            text-align: center;
+            font-family: 'Orbitron', sans-serif;
+            color: var(--cyan);
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            margin-bottom: 40px;
+            text-shadow: 0 0 15px var(--cyan);
+        }
+
+        .manual-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .feature-card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            padding: 25px;
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(10px);
+        }
+
+        .feature-card:hover {
+            border-color: var(--cyan);
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(0, 242, 255, 0.1);
+        }
+
+        .feature-card::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 4px; height: 100%;
+            background: var(--cyan);
+        }
+
+        .card-icon {
+            font-size: 30px;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .feature-card h3 {
+            color: var(--cyan);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .feature-card p {
+            font-size: 14px;
+            line-height: 1.6;
+            font-weight: 400;
+        }
+
+        /* --- Technical Specs Footer --- */
+        .tech-footer {
+            margin-top: 50px;
+            background: rgba(0, 0, 0, 0.5);
+            border-top: 1px solid var(--border);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+        }
+
+        .status-pulse {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: var(--cyan);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--cyan);
+            animation: pulse 1.5s infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="top-nav">
+        <div style="font-family: 'Orbitron'; color: var(--cyan);">G-NOV_SENTINEL</div>
+        <a href="gnov1.htm" class="back-home">⬅ RETURN TO MISSION</a>
+    </header>
+
+    <div class="container">
+        <h1 class="hero-title">Operational Protocol v1.0</h1>
+
+        <div class="manual-grid">
+            <div class="feature-card">
+                <span class="card-icon">🎙️</span>
+                <h3>NEURAL_VOICE_LINK</h3>
+                <p>Equipped with low-latency audio processing. G-Nov mirrors your linguistic dialect and provides tactical responses in a calibrated deep male voice. Direct command execution via vocal interface is authorized.</p>
+            </div>
+
+            <div class="feature-card">
+                <span class="card-icon">🖥️</span>
+                <h3>VISUAL_TELEMETRY</h3>
+                <p>Activate Screen-Cast for real-time monitoring. Click any coordinate on the UI grid to trigger a Cyber-Scan. Sentinel identifies code vulnerabilities and syntax errors with precise Ghost-Fix overlays.</p>
+            </div>
+
+            <div class="feature-card">
+                <span class="card-icon">🪄</span>
+                <h3>EXECUTIVE_MAGIC</h3>
+                <p>Command-driven workspace management. Ask G-Nov to "Create a doc" or "Take a note" to initialize embedded applications. System-level data injection into drafts is fully automated.</p>
+            </div>
+
+            <div class="feature-card">
+                <span class="card-icon">📂</span>
+                <h3>MISSION_ARCHIVES</h3>
+                <p>Persistent memory protocol. All tactical communications are encrypted and stored in the Neural Banks. Use the session playback system to reconstruct past missions and data streams.</p>
+            </div>
+
+            <div class="feature-card">
+                <span class="card-icon">📝</span>
+                <h3>TACTICAL_NOTEBOOK</h3>
+                <p>Integrated secure notepad for mission-critical observations. Notes are auto-synced with the current session ID and can be managed through the Neural Command Center menu.</p>
+            </div>
+
+            <div class="feature-card">
+                <span class="card-icon">🛡️</span>
+                <h3>SECURITY_OVERRIDE</h3>
+                <p>Real-time threat detection. System monitors visual pixels for sensitive data exposure or phishing attempts. Visual and audio alarms trigger instantly upon risk identification.</p>
+            </div>
+        </div>
+
+        <div class="tech-footer">
+            <div class="status-pulse"></div>
+            <span style="font-family: 'Orbitron'; font-size: 12px; color: var(--cyan);">G-NOV CORE STATUS: OPTIMAL | ALL MODULES LOADED</span>
+        </div>
+    </div>
+
+</body>
+</html>

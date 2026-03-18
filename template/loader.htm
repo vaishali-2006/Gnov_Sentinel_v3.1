@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>G-NOV | Initializing...</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --cyan: #00f2ff; }
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background: #05080a; overflow: hidden;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* --- 🌀 NEURAL CORE ANIMATION --- */
+        .loader-wrapper { position: relative; width: 250px; height: 250px; }
+        
+        .circle {
+            position: absolute; border: 2px solid transparent;
+            border-top-color: var(--cyan); border-radius: 50%;
+            animation: spin 2s linear infinite;
+        }
+        .c1 { inset: 0; animation-duration: 1.5s; }
+        .c2 { inset: 20px; border-top-color: #ff3366; animation-duration: 1s; animation-direction: reverse; }
+        .c3 { inset: 40px; border-top-color: var(--cyan); animation-duration: 0.5s; }
+
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* --- 📝 TEXT STYLING --- */
+        .welcome-text {
+            margin-top: 40px; color: var(--cyan);
+            font-size: 18px; letter-spacing: 5px;
+            text-shadow: 0 0 15px var(--cyan);
+            text-transform: uppercase; text-align: center;
+        }
+
+        .status-box {
+            margin-top: 15px; font-size: 10px; color: #555;
+            letter-spacing: 2px;
+        }
+
+        #progress-bar {
+            width: 300px; height: 2px; background: rgba(255,255,255,0.05);
+            margin-top: 20px; position: relative; overflow: hidden;
+        }
+        #fill {
+            position: absolute; left: 0; top: 0; height: 100%;
+            width: 0%; background: var(--cyan);
+            box-shadow: 0 0 10px var(--cyan);
+            transition: width 0.1s linear;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="loader-wrapper">
+        <div class="circle c1"></div>
+        <div class="circle c2"></div>
+        <div class="circle c3"></div>
+    </div>
+
+    <div class="welcome-text">Welcome to G-Nov Sentinel</div>
+    <div class="status-box">SYSTEM_INITIALIZATION: <span id="percent">0</span>%</div>
+    
+    <div id="progress-bar"><div id="fill"></div></div>
+
+    <script>
+        const REDIRECT_URL = "/template/gnov1.htm"; // 👈 Yahan apna path check kar lena
+
+        function startInitialization() {
+            // 🎤 DEEP TACTICAL VOICE
+            const welcomeMsg = "Welcome to G-Nov Sentinel. Initializing Neural Link. Standing by for Commander.";
+            const speech = new SpeechSynthesisUtterance(welcomeMsg);
+            
+            const voices = window.speechSynthesis.getVoices();
+            speech.voice = voices.find(v => v.name.includes('Male')) || voices[0];
+            speech.pitch = 0.5; // Deep Bhari Awaaz
+            speech.rate = 0.9;
+            window.speechSynthesis.speak(speech);
+
+            // ⏳ PROGRESS LOGIC (100% Load)
+            let progress = 0;
+            const fill = document.getElementById('fill');
+            const percent = document.getElementById('percent');
+
+            const interval = setInterval(() => {
+                progress += 1;
+                fill.style.width = progress + "%";
+                percent.innerText = progress;
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        window.location.href = REDIRECT_URL;
+                    }, 800);
+                }
+            }, 40); // Total speed approx 4 seconds
+        }
+
+        // 🛡️ BROWSER SECURITY FIX: Needs a click to play sound
+        document.body.addEventListener('click', () => {
+            if (document.body.getAttribute('data-started') !== 'true') {
+                document.body.setAttribute('data-started', 'true');
+                startInitialization();
+            }
+        }, { once: true });
+
+        // Swagat ka hint
+        console.log("📡 Commander, Click anywhere to initialize G-Nov.");
+    </script>
+</body>
+</html>
